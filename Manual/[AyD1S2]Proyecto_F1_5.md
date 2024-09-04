@@ -341,3 +341,56 @@ Como Cliente, quiero crear copias de seguridad cifradas de mis archivos, para as
 
 - Enviar correos electrónicos para el restablecimiento de contraseñas.
 
+## Requerimientos no Funcionales
+
+### 1 Seguridad
+
+- Los datos de los usuarios deben estar protegidos mediante encriptación, especialmente las contraseñas.
+
+- Debe garantizarse la seguridad, integridad y accesibilidad de los archivos almacenados en la nube.
+
+- El acceso a los archivos de los clientes debe estar restringido para roles administrativos (Admin y Empleado).
+
+### 2 Escalabilidad
+- El sistema debe ser capaz de escalar horizontalmente para manejar un aumento en el número de usuarios y la cantidad de datos almacenados.
+
+- El sistema debe ser capaz de gestionar el almacenamiento de clientes a nivel global.
+
+- El sistema debe ser capaz de manejar múltiples solicitudes simultáneas de los clientes.
+
+### 3 Disponibilidad
+
+- El sistema debe estar disponible las 24 horas del día, los 7 días de la semana, con un tiempo de inactividad mínimo.
+
+- Los usuarios deben poder acceder a sus archivos desde cualquier parte del mundo, lo que implica una alta disponibilidad del sistema.
+
+### 4 Rendimento
+
+- El sistema debe ser capaz de gestionar operaciones de subida, descarga, modificación y eliminación de archivos de manera eficiente.
+
+### 5 Usabilidad
+
+- La interfaz de usuario debe ser intuitiva y fácil de usar, para que los clientes puedan navegar y gestionar sus archivos sin dificultad.
+
+- El sistema debe incluir gráficos y secciones claras para la navegación por archivos y visualización del espacio ocupado.
+
+### 6 Compatibilidad y Portabilidad
+
+- El sistema debe ser compatible con múltiples dispositivos y navegadores, para garantizar una experiencia de usuario consistente.
+
+
+### 7 Confiabilidad
+
+- El sistema debe ser confiable y seguro, con copias de seguridad regulares y redundancia de datos para evitar la pérdida de información.
+
+- Las acciones destructivas, como eliminar cuentas o vaciar la papelera, deben ser irreversibles y confirmadas por correo electrónico.
+
+### 8 Mantenibilidad
+
+- El código del sistema debe ser modular y bien documentado, para facilitar futuras actualizaciones y correcciones.
+
+- El sistema debe estar diseñado de manera que permita fácil mantenimiento, tanto para la gestión de usuarios como para la administración del almacenamiento y paquetes.
+
+### 9 Regulación de espacio
+
+- El sistema debe ser capaz de gestionar aumentos o reducciones de espacio de almacenamiento de manera dinámica y controlada, evitando inconsistencias cuando el espacio ocupado supere el límite reducido.
