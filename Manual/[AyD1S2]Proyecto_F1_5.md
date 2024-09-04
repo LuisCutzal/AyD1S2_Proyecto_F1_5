@@ -233,3 +233,111 @@ Como Cliente, quiero crear copias de seguridad cifradas de mis archivos, para as
 
 **Criterio de aceptación:**
 - El sistema debe permitir la creación de copias de seguridad cifradas que sean recuperables únicamente por el cliente.
+
+## Requerimientos Funcionales
+### 1. Gestión de usuarios
+#### Admin
+
+- Crear usuarios de tipo Empleado y Cliente.
+
+- Modificar configuraciones de cuentas (aumentar o reducir espacio de almacenamiento).
+
+- Eliminar cuentas de usuarios, notificando previamente por correo electrónico, y eliminar permanentemente la información asociada a la cuenta.
+
+- Crear nuevas cuentas para usuarios que ya eliminaron previamente su cuenta, iniciando con una cuenta vacía.
+
+- No tener acceso a los archivos personales de los usuarios.
+
+#### Empleado
+
+- Gestionar usuarios finales y modificar configuraciones de sus cuentas.
+
+- No tener acceso a los archivos personales de los usuarios.
+
+#### Cliente
+- Registrar una cuenta en el sistema proporcionando la siguiente información:
+    - Nombre y apellido
+    - Nombre de usuario
+    - Contraseña (encriptada)
+    - Email (validar que no esté repetido)
+    - Celular y extensión
+    - País de residencia
+    - Nacionalidad
+    - Elegir un paquete de almacenamiento:
+    - Premium (150 GB)
+    - Standard (50 GB)
+    - Basic (15 GB)
+    - Iniciar sesión con su correo electrónico o nombre de usuario.
+    - Restablecer la contraseña por medio de correo electrónico si se olvida.
+    - Confirmar la creación de la cuenta a través de un correo de validación.
+    - Solicitar expansión o reducción de espacio de almacenamiento.
+    - Solicitar eliminación de su cuenta (requiere confirmación por correo).
+
+### 2. Gestión de archivos y carpetas
+
+- Crear, modificar y eliminar carpetas.
+
+- Subir, descargar, modificar y eliminar archivos.
+
+- Al eliminar archivos, estos se envían a la papelera.
+
+- Vaciar la papelera (acción irreversible).
+
+- Previsualizar archivos como PDF, imágenes, música y videos.
+
+- Compartir carpetas y archivos con otros usuarios (por correo o nombre de usuario).
+
+- Crear una carpeta "Compartidos conmigo" para almacenar archivos compartidos.
+
+- Mostrar quién es el propietario del archivo o carpeta compartida.
+
+- Solo el propietario puede modificar o eliminar el contenido compartido.
+
+- Dejar de compartir archivos o carpetas.
+
+- Etiquetar carpetas compartidas para identificarlas.
+
+- Agregar etiquetas personalizadas a las carpetas.
+
+- Conocer detalles de cada archivo o carpeta:
+
+- Fecha de creación y modificación.
+
+- Espacio ocupado.
+
+- Ver una lista de archivos y carpetas recientes con los que se ha interactuado.
+
+- Marcar archivos y carpetas como favoritos.
+
+- Crear un Backup cifrado de los archivos.
+
+### 3. Gestión de espacio de almacenamiento
+
+- Al registrar un nuevo usuario, asignar uno de los paquetes de almacenamiento disponibles.
+
+- Los nuevos usuarios tendrán acceso gratuito a los paquetes de almacenamiento durante 3 meses, luego deberán recibir una alerta para realizar el pago o bloquear el acceso.
+
+- Los administradores pueden aumentar o reducir el espacio de almacenamiento asignado a las cuentas, con la restricción de no reducir el espacio si supera el espacio ocupado.
+
+### 4. Autenticación y registro
+
+- Los usuarios deben poder iniciar sesión o registrarse desde la página de inicio.
+
+- Los administradores y empleados no deben tener acceso a los archivos de los clientes.
+
+- La funcionalidad de "olvidé mi contraseña" debe permitir a los usuarios restablecer su contraseña a través de un correo electrónico.
+
+### 5. Interfaz de usuario
+
+- La interfaz debe mostrar un explorador de archivos donde el usuario pueda ver y gestionar sus archivos.
+
+- Incluir una gráfica que muestre el espacio ocupado en la cuenta del usuario.
+
+### 6. Notificaciones y correos electrónicos
+
+- Enviar correos electrónicos para confirmar la creación de cuentas.
+
+- Notificar por correo electrónico a los usuarios cuando su cuenta esté en proceso de ser eliminada.
+
+- Enviar correos electrónicos para el restablecimiento de contraseñas.
+
