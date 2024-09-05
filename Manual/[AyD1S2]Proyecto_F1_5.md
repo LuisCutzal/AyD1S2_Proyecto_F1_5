@@ -477,3 +477,22 @@ Como Cliente, quiero crear copias de seguridad cifradas de mis archivos, para as
 
 # Diagrama de despliegue
 ![](img/diagramaDespliegue/DiagramaDespliegue.png)
+
+# Descripción de la Seguridad de la Aplicación
+
+## 1 Inicio de sesión
+Cuando un usuario intenta iniciar sesión en la solución del proyecto, el sistema solicita las siguientes credenciales:
+
+- Nombre de Usuario o Correo Electrónico
+- Contraseña
+
+La aplicacion verificara en la base de datos que el nombre de usuario o correo electrónico ingresado exista además las contraseñas nunca se almacenan en texto plano. Se utiliza un algoritmo de hash robusto como bcrypt o Argon2.
+
+
+## 2 Creacion de cuentas
+
+Cada ves que un cliente se registre en la aplicación como ultimo paso se enviara un mensaje de confirmacion al correo que ingreso en el sistema, esto con el fin de asegurar que la cuenta es legitima.
+
+## 3 Recuperacion de contraseñas
+
+En caso de olvido de la contraseña, se debe pasar por un proceso de recuperación seguro que incluye verificación por correo electrónico
