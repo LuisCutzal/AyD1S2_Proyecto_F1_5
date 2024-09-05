@@ -394,3 +394,86 @@ Como Cliente, quiero crear copias de seguridad cifradas de mis archivos, para as
 ### 9 Regulación de espacio
 
 - El sistema debe ser capaz de gestionar aumentos o reducciones de espacio de almacenamiento de manera dinámica y controlada, evitando inconsistencias cuando el espacio ocupado supere el límite reducido.
+
+
+# Diagrama de actividades
+
+## Administrador
+### 1 Creación de usuarios Empleado y Cliente 
+
+![](img/diagramaActividades/CreacionUsuariosAdmin.png)
+
+
+### 2 Modificación de configuraciones de cuentas 
+
+![](img/diagramaActividades/ModificacionCuentaAdmin.png)
+
+### 3 Eliminación de cuentas 
+
+![](img/diagramaActividades/EliminacionCuentaAdmin.png)
+
+### 4 Creación de nuevas cuentas tras eliminación  
+
+![](img/diagramaActividades/CreacionCuentasAdmin.png)
+
+
+## Empleado
+
+### 1 Gestión de usuarios finales   
+
+![](img/diagramaActividades/GestionUsuariosFinalesEmpleado.png)
+
+### 2 Modificación de configuraciones de cuentas
+
+![](img/diagramaActividades/ModificacionConfiguracionCuentaEmpleado.png)
+
+### 4 Restricciones de acceso 
+
+![](img/diagramaActividades/RestriccionesAccesoEmpleado.png)
+
+## Cliente
+
+### 1 Registro de nueva cuenta 
+![](img/diagramaActividades/RegistroNuevaCuentaCliente.png)
+
+### 2 Elección de paquete de almacenamiento 
+![](img/diagramaActividades/EleccionPaqueteCliente.png)
+
+### 3 Inicio de sesión  
+![](img/diagramaActividades/InicioSesionCliente.png)
+
+### 4 Gestión de suscripción
+![](img/diagramaActividades/GestionSuscripcionCliente.png)
+
+### 5 Explorador de archivos  
+![](img/diagramaActividades/ExploradorArchivosCliente.png)
+### 6 Manipulación de carpetas  
+![](img/diagramaActividades/ManipulacionCarpetasCliente.png)
+### 7 Manipulación de archivos
+![](img/diagramaActividades/diagramaActividades/ManipulacionArchivosCliente.png)
+### 8 Gestión de la papelera 
+![](img/diagramaActividades/GestionPapeleraCliente.png)
+### 9 Modificación de datos de perfil 
+![](img/diagramaActividades/ModificacionPerfilCliente.png)
+### 10 Solicitudes de espacio de almacenamiento  
+![](img/diagramaActividades/ModificacionAlmacenamientoCliente.png)
+### 11 Eliminación de cuenta 
+![](img/diagramaActividades/EliminacionCuentaCliente.png)
+### 12 Compartir archivos y carpetas 
+![](img/diagramaActividades/CompartirArchivoCarpetaCliente.png)
+### 13 Etiquetado personalizado  
+![](img/diagramaActividades/EtiquetadoCliente.png)
+### 14 Detalles de archivos y carpetas  
+![](img/diagramaActividades/DetallesArchivoCliente.png)
+### 15 Archivos y carpetas recientes 
+![](img/diagramaActividades/ArchivoCarpetaRecienteCliente.png)
+### 16 Previsualización de archivos  
+![](img/diagramaActividades/PrevisualizacionArchivoCliente.png)
+### 17 Lista de favoritos  
+![](img/diagramaActividades/AgregarYVerFavCliente.png)
+### 18 Backup cifrado 
+![](img/diagramaActividades/BackupCrifradoCliente.png)
+
+
+# Diagrama de despliegue
+![](img/diagramaDespliegue/DiagramaDespliegue.png)
