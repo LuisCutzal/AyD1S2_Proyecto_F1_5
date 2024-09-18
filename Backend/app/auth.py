@@ -1,8 +1,12 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from app.connection import get_db_connection
+from app.decorators import token_required
+
 import bcrypt
 import pyodbc
 import re
+import jwt
+
 auth_bp = Blueprint('auth', __name__)
 
 # Expresión regular para validar email
@@ -85,6 +89,14 @@ def login_user():
     user = cursor.fetchone()
 
     if user and bcrypt.checkpw(contrasena.encode('utf-8'), user.contrasena.encode('utf-8')):
-        return jsonify({"message": "Login successful", "user_id": user.id_usuario}), 200
+        # Genera el token y envíalo en la respuesta
+        token = jwt.encode({'id_usuario': user.id_usuario}, current_app.config['SECRET_KEY'], algorithm='HS256')
+        return jsonify({"message": "Login successful", "token": token}), 200
     else:
         return jsonify({"error": "Invalid email or password"}), 401
+
+@auth_bp.route('/protected', methods=['GET'])
+@token_required
+def protected_route(current_user):
+    # La ruta solo se puede acceder si el token es válido
+    return jsonify({"message": f"Welcome, user {current_user}!"}), 200
