@@ -496,3 +496,8 @@ Cada ves que un cliente se registre en la aplicación como ultimo paso se enviar
 ## 3 Recuperacion de contraseñas
 
 En caso de olvido de la contraseña, se debe pasar por un proceso de recuperación seguro que incluye verificación por correo electrónico
+
+
+# Diagrama Entidad-Relacion
+
+![Entidad Relacion](/Manual/img/diagramaEntidadRelacion/ER.png)
