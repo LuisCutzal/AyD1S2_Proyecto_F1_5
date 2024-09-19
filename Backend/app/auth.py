@@ -82,25 +82,25 @@ def login_user():
     else:
         return jsonify({"error": "Invalid email or password"}), 401
 
-@auth_bp.route('/protected', methods=['GET'])
-@token_required
-def protected_route(current_user):
-    # La ruta solo se puede acceder si el token es válido
-    return jsonify({"message": f"Welcome, user {current_user}!"}), 200
+# @auth_bp.route('/protected', methods=['GET'])
+# @token_required
+# def protected_route(current_user):
+#     # La ruta solo se puede acceder si el token es válido
+#     return jsonify({"message": f"Welcome, user {current_user}!"}), 200
 
 
-@auth_bp.route('/admin', methods=['GET'])
-@token_required
-@admin_required
-def admin_route(current_user):
-    print(current_user)
-    return jsonify({"message": f"Welcome admin, user {current_user['nombre_usuario']}!"}), 200
+# @auth_bp.route('/admin', methods=['GET'])
+# @token_required
+# @admin_required
+# def admin_route(current_user):
+#     print(current_user)
+#     return jsonify({"message": f"Welcome admin, user {current_user['nombre_usuario']}!"}), 200
 
 
-@auth_bp.route('/empleado', methods=['GET'])
-@token_required
-@empleado_required
-def empleado_route(current_user):
-    return jsonify({"message": f"Welcome empleado, user {current_user['nombre_usuario']}!"}), 200
+# @auth_bp.route('/empleado', methods=['GET'])
+# @token_required
+# @empleado_required
+# def empleado_route(current_user):
+#     return jsonify({"message": f"Welcome empleado, user {current_user['nombre_usuario']}!"}), 200
 
 
