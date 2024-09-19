@@ -15,7 +15,7 @@ email_regex = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 def register_user():
     data = request.get_json()
     # Validación de datos
-    required_fields = ['nombre', 'apellido', 'nombre_usuario', 'email', 'celular', 'nacionalidad', 'pais_residencia', 'contrasena', 'id_rol', 'espacio_asignado']
+    required_fields = ['nombre', 'apellido', 'nombre_usuario', 'email', 'celular', 'nacionalidad', 'pais_residencia', 'contrasena', 'espacio_asignado']
     for field in required_fields:
         if field not in data:
             return jsonify({"error": f"Field {field} is required"}), 400
@@ -27,7 +27,7 @@ def register_user():
     nacionalidad = data['nacionalidad']
     pais_residencia = data['pais_residencia']
     contrasena = data['contrasena']
-    id_rol = data['id_rol']
+    id_rol = 3 #manejar solo el numero 3 que es cliente
     espacio_asignado = data['espacio_asignado']
     # Validación de formato de email
     if not re.match(email_regex, email):
