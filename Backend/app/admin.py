@@ -69,3 +69,59 @@ def register_user(current_user):
     except Exception as e:
         # Manejar otros errores
         return 500
+    
+
+
+@admin_bp.route('/users', methods=['GET'])
+@token_required
+@admin_required
+def get_users(current_user):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id_usuario, nombre_usuario, espacio_asignado, espacio_ocupado FROM Usuarios')
+    users = cursor.fetchall()
+    conn.close()
+    
+    users_list = [{"id_usuario": user[0], "nombre_usuario": user[1], "espacio_asignado": user[2], "espacio_ocupado": user[3]} for user in users]
+    
+    return jsonify(users_list), 200
+
+
+@admin_bp.route('/users/<int:id_usuario>/update_space', methods=['PUT'])
+@token_required
+@admin_required  # Solo un administrador puede modificar el espacio
+def update_user_space(current_user, id_usuario):
+    data = request.get_json()
+    nuevo_espacio_asignado = data.get('espacio_asignado')  # El espacio nuevo que ingresa el admin
+
+    if nuevo_espacio_asignado is None:
+        return jsonify({"error": "Se requiere el nuevo espacio asignado"}), 400
+
+    # Conexión a la base de datos
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Obtener el espacio ocupado actual
+    cursor.execute('SELECT espacio_ocupado FROM Usuarios WHERE id_usuario = ?', (id_usuario,))
+    user_data = cursor.fetchone()
+
+    if not user_data:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    espacio_ocupado = user_data[0]
+
+    # Validación: Si el nuevo espacio es menor que el espacio ocupado, no se puede reducir
+    if nuevo_espacio_asignado < espacio_ocupado:
+        return jsonify({
+            "error": "No se puede reducir el espacio porque el espacio ocupado ({}) es mayor que el nuevo espacio asignado ({})".format(espacio_ocupado, nuevo_espacio_asignado)
+        }), 400
+
+    # Actualizar el espacio asignado
+    cursor.execute('UPDATE Usuarios SET espacio_asignado = ? WHERE id_usuario = ?',
+                   (nuevo_espacio_asignado, id_usuario))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "Espacio asignado actualizado correctamente"}), 200
+
+
