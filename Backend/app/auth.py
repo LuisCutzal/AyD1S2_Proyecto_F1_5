@@ -1,11 +1,11 @@
 from flask import Blueprint, request, jsonify, current_app
 from app.connection import get_db_connection
-from app.decorators import token_required, admin_required,empleado_required
 
 import bcrypt
 import pyodbc
 import re
 import jwt
+from datetime import datetime, timedelta
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -72,6 +72,9 @@ def login_user():
     cursor.execute('SELECT id_usuario, contrasena, id_rol, nombre_usuario FROM Usuarios WHERE email = ?', (email,))
     user = cursor.fetchone()
     if user and bcrypt.checkpw(contrasena.encode('utf-8'), user.contrasena.encode('utf-8')):
+        # Actualizar la fecha del último login
+        cursor.execute('UPDATE Usuarios SET fecha_ultimo_login = ? WHERE id_usuario = ?', (datetime.now(), user[0]))
+        conn.commit()
         # Genera el token y envíalo en la respuesta
         token = jwt.encode({
             'id_usuario': user[0],

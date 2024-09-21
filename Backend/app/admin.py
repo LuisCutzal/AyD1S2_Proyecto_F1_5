@@ -1,11 +1,13 @@
 from flask import Blueprint, jsonify, request
 from app.connection import get_db_connection
-from functools import wraps
+from app.decorators import token_required, admin_required
+from app.email import enviar_correo_aviso
 import bcrypt
 import pyodbc
 import re
+from datetime import datetime, timedelta
 import jwt
-from app.decorators import token_required, admin_required
+from functools import wraps
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -125,3 +127,94 @@ def update_user_space(current_user, id_usuario):
     return jsonify({"message": "Espacio asignado actualizado correctamente"}), 200
 
 
+@admin_bp.route('/users/inactive', methods=['GET'])
+@token_required
+@admin_required
+def get_inactive_users(current_user):
+    # Obtener la fecha límite para usuarios inactivos (más de 30 días sin iniciar sesión)
+    one_month_ago = datetime.now() - timedelta(days=30)
+
+    # Conexión a la base de datos
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Buscar usuarios cuyo 'fecha_ultimo_login' sea anterior a 'one_month_ago'
+    cursor.execute('''
+        SELECT id_usuario, nombre_usuario, email, fecha_ultimo_login 
+        FROM Usuarios 
+        WHERE fecha_ultimo_login IS NULL OR fecha_ultimo_login < ?
+    ''', (one_month_ago,))
+
+    inactive_users = cursor.fetchall()
+    conn.close()
+
+    # Construir la respuesta en formato JSON
+    users_list = [
+        {
+            "id_usuario": user[0],
+            "nombre_usuario": user[1],
+            "email": user[2],
+            "fecha_ultimo_login": user[3].strftime('%Y-%m-%d %H:%M:%S') if user[3] else 'Nunca'
+        } 
+        for user in inactive_users
+    ]
+
+    return jsonify(users_list), 200
+
+
+@admin_bp.route('/users/<int:id_usuario>/notify_removal', methods=['POST'])
+@token_required
+@admin_required
+def notify_user_removal(current_user, id_usuario):
+    # Conexión a la base de datos
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Obtener el correo y nombre de usuario
+    cursor.execute('SELECT email, nombre_usuario FROM Usuarios WHERE id_usuario = ?', (id_usuario,))
+    user_data = cursor.fetchone()
+
+    if not user_data:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    email, nombre_usuario = user_data
+
+    # Enviar el correo de aviso
+    enviar_correo_aviso(email, nombre_usuario)
+
+    return jsonify({"message": "Correo de aviso enviado correctamente"}), 200
+
+
+@admin_bp.route('/users/<int:id_usuario>/remove', methods=['DELETE'])
+@token_required
+@admin_required
+def remove_user_data(current_user, id_usuario):
+    # Conexión a la base de datos
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Verificar si el usuario existe
+    cursor.execute('SELECT * FROM Usuarios WHERE id_usuario = ?', (id_usuario,))
+    user_data = cursor.fetchone()
+
+    if not user_data:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    try:
+        # Eliminar datos de otras tablas relacionadas
+        cursor.execute('DELETE FROM Archivos WHERE id_usuario_propietario = ?', (id_usuario,))
+        cursor.execute('DELETE FROM Carpetas WHERE id_usuario_propietario = ?', (id_usuario,))
+        cursor.execute('DELETE FROM Etiquetas WHERE id_usuario = ?', (id_usuario,))
+        cursor.execute('DELETE FROM Favoritos WHERE id_usuario = ?', (id_usuario,))
+        cursor.execute('DELETE FROM Actividades_Recientes WHERE id_usuario = ?', (id_usuario,))
+        cursor.execute('DELETE FROM Backups_Cifrados WHERE id_usuario = ?', (id_usuario,))
+        cursor.execute('DELETE FROM Compartidos WHERE id_usuario_propietario = ? OR id_usuario_destinatario = ?', (id_usuario, id_usuario))
+        cursor.execute('UPDATE Usuarios SET espacio_ocupado = 0 WHERE id_usuario = ?', (id_usuario,))
+        conn.commit()  # Hacer commit para guardar los cambios
+        return jsonify({"message": "Toda la información del usuario ha sido eliminada correctamente."}), 200
+
+    except Exception as e:
+        conn.rollback()  # Revierte en caso de error
+        return 500
+    finally:
+        conn.close()
