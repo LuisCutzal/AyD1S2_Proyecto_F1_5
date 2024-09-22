@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
 from app.connection import get_db_connection
 from app.decorators import token_required, cliente_required
-
+import os
+from werkzeug.utils import secure_filename
 
 cliente_bp = Blueprint('cliente', __name__)
 
@@ -163,3 +164,82 @@ def modificar_carpeta(current_user, id_carpeta):
     conn.commit()
 
     return jsonify({'message': 'Carpeta modificada correctamente'}), 200
+
+
+# Ruta donde se almacenarán los archivos
+UPLOAD_FOLDER = 'C:\\Users\\cutza\\Desktop\\usac\\2024\\SegundoSemestre2024\\AyD\\lab\\pruebasubidas'
+
+@cliente_bp.route('/archivo/subir', methods=['POST'])
+@token_required
+@cliente_required
+def subir_archivo(current_user):
+    if 'archivo' not in request.files:
+        return jsonify({'error': 'No se ha enviado ningún archivo.'}), 400
+    archivo = request.files['archivo']
+    if archivo.filename == '':
+        return jsonify({'error': 'Nombre de archivo no válido.'}), 400
+    
+    datos = request.form
+    id_carpeta = datos.get('id_carpeta')
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    if id_carpeta:
+        # Verificar si la carpeta existe y pertenece al usuario
+        cursor.execute('''
+            SELECT id_carpeta, nombre_carpeta
+            FROM Carpetas
+            WHERE id_carpeta = ? AND id_usuario_propietario = ? AND en_papelera = 0
+        ''', (id_carpeta, current_user['id_usuario']))
+        carpeta = cursor.fetchone()
+        
+        if not carpeta:
+            return jsonify({'error': 'La carpeta no existe o no pertenece al usuario.'}), 404
+        
+        # Usar 'carpeta[1]' para obtener el nombre de la carpeta
+        ruta_carpeta = os.path.join(UPLOAD_FOLDER, carpeta[1])  # Aquí se usa 'carpeta[1]' (nombre_carpeta)
+        
+        # Crear la carpeta en el sistema de archivos si no existe
+        if not os.path.exists(ruta_carpeta):
+            os.makedirs(ruta_carpeta)
+        
+        # Guardar el archivo en la carpeta especificada
+        ruta_archivo = os.path.join(ruta_carpeta, secure_filename(archivo.filename))
+    
+    else:
+        # Si no se proporciona carpeta, guardar en la raíz (UPLOAD_FOLDER)
+        ruta_archivo = os.path.join(UPLOAD_FOLDER, secure_filename(archivo.filename))
+    
+    # Guardar el archivo en la ruta generada
+    archivo.save(ruta_archivo)
+    
+    # Obtener el tamaño del archivo en MB
+    tamano_archivo_mb = obtener_tamano(archivo)  # Asegúrate de que 'obtener_tamano' esté definido correctamente
+    
+    # Insertar el archivo en la base de datos
+    cursor.execute('''
+        INSERT INTO Archivos (nombre_archivo, id_usuario_propietario, id_carpeta, tamano_mb)
+        VALUES (?, ?, ?, ?)
+    ''', (secure_filename(archivo.filename), current_user['id_usuario'], id_carpeta, tamano_archivo_mb))
+    
+    # Sumar el tamaño del archivo al espacio ocupado del usuario
+    cursor.execute('''
+        UPDATE Usuarios
+        SET espacio_ocupado = espacio_ocupado + ?
+        WHERE id_usuario = ?
+    ''', (tamano_archivo_mb, current_user['id_usuario']))
+
+    # Guardar los cambios en la base de datos
+    conn.commit()
+
+    return jsonify({'message': 'Archivo subido exitosamente.'}), 201
+
+
+def obtener_tamano(archivo):
+    """
+    Calcula el tamaño del archivo en MB.
+    """
+    archivo.seek(0, os.SEEK_END)  # Mover el puntero al final
+    tamano = archivo.tell() / (1024 * 1024)  # Obtener tamaño en MB
+    archivo.seek(0)  # Volver al principio
+    return tamano
