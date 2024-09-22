@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file
 from app.connection import get_db_connection
 from app.decorators import token_required, cliente_required
 import os
@@ -243,3 +243,23 @@ def obtener_tamano(archivo):
     tamano = archivo.tell() / (1024 * 1024)  # Obtener tamaño en MB
     archivo.seek(0)  # Volver al principio
     return tamano
+
+
+@cliente_bp.route('/archivo/descargar/<int:id_archivo>', methods=['GET'])
+@token_required
+@cliente_required
+def descargar_archivo(current_user, id_archivo):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Verificar si el archivo existe y pertenece al usuario
+    cursor.execute(''' 
+        SELECT nombre_archivo 
+        FROM Archivos 
+        WHERE id_archivo = ? AND id_usuario_propietario = ? AND en_papelera = 0
+    ''', (id_archivo, current_user['id_usuario']))
+    archivo = cursor.fetchone()
+    if archivo is None:
+        return jsonify({'error': 'Archivo no encontrado.'}), 404
+    # Ruta completa del archivo
+    ruta_archivo = os.path.join(UPLOAD_FOLDER, archivo.nombre_archivo)
+    return send_file(ruta_archivo, as_attachment=True)
