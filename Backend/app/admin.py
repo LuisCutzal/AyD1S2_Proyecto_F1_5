@@ -13,7 +13,7 @@ admin_bp = Blueprint('admin', __name__)
 
 email_regex = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 
-@admin_bp.route('/admin', methods=['GET'])
+@admin_bp.route('/admin', methods=['GET']) #dashbord para el administrador
 @token_required
 @admin_required
 def admin_route(current_user):
