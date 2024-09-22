@@ -162,3 +162,4 @@ CREATE TABLE Compartidos (
 
 ALTER TABLE Usuarios
 ADD fecha_ultimo_login DATETIME DEFAULT GETDATE();
+ALTER TABLE Usuarios ADD fecha_fin_periodo_gratuito DATETIME;
