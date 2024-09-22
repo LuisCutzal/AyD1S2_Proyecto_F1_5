@@ -263,3 +263,63 @@ def descargar_archivo(current_user, id_archivo):
     # Ruta completa del archivo
     ruta_archivo = os.path.join(UPLOAD_FOLDER, archivo.nombre_archivo)
     return send_file(ruta_archivo, as_attachment=True)
+
+
+#eliminar archivo
+@cliente_bp.route('/archivo/eliminar/<int:id_archivo>', methods=['DELETE'])
+@token_required
+@cliente_required
+def eliminar_archivo(current_user, id_archivo):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE Archivos
+        SET en_papelera = 1
+        WHERE id_archivo = ? AND id_usuario_propietario = ?
+    ''', (id_archivo, current_user['id_usuario']))
+    conn.commit()
+    return jsonify({'message': 'Archivo movido a la papelera.'}), 200
+
+#modificar archvio
+@cliente_bp.route('/archivo/modificar/<int:id_archivo>', methods=['PUT'])
+@token_required
+@cliente_required
+def modificar_archivo(current_user, id_archivo):
+    datos = request.json
+    nuevo_nombre = datos.get('nombre_archivo')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(''' 
+        SELECT nombre_archivo, en_papelera 
+        FROM Archivos 
+        WHERE id_archivo = ? AND id_usuario_propietario = ? 
+    ''', (id_archivo, current_user['id_usuario']))
+    archivo = cursor.fetchone()
+    
+    if archivo is None:
+        return jsonify({'error': 'Archivo no encontrado.'}), 404
+
+    if archivo[1] == 1:  # Verificar si está en papelera
+        return jsonify({'error': 'El archivo está en papelera y no puede ser modificado.'}), 400
+    
+    # Extraer la extensión del archivo existente
+    nombre_viejo = archivo[0]
+    extension = os.path.splitext(nombre_viejo)[1]  # Obtener la extensión
+    
+    # Renombrar el archivo en el servidor usando la misma extensión
+    nombre_nuevo = os.path.join(UPLOAD_FOLDER, secure_filename(nuevo_nombre) + extension)
+    ruta_vieja = os.path.join(UPLOAD_FOLDER, nombre_viejo)
+    
+    os.rename(ruta_vieja, nombre_nuevo)
+    
+    # Actualizar el nombre del archivo en la base de datos
+    cursor.execute(''' 
+        UPDATE Archivos 
+        SET nombre_archivo = ? 
+        WHERE id_archivo = ? AND id_usuario_propietario = ? 
+    ''', (secure_filename(nuevo_nombre) + extension, id_archivo, current_user['id_usuario']))
+    
+    conn.commit()
+    
+    return jsonify({'message': 'Nombre del archivo modificado correctamente.'}), 200
