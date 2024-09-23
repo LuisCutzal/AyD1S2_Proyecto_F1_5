@@ -323,3 +323,68 @@ def modificar_archivo(current_user, id_archivo):
     conn.commit()
     
     return jsonify({'message': 'Nombre del archivo modificado correctamente.'}), 200
+
+
+#vaciar papelera
+@cliente_bp.route('/papelera/vaciar', methods=['DELETE'])
+@token_required
+@cliente_required
+def vaciar_papelera(current_user):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Obtener los archivos en la papelera del usuario
+    cursor.execute('''
+        SELECT id_archivo, nombre_archivo 
+        FROM Archivos 
+        WHERE id_usuario_propietario = ? AND en_papelera = 1
+    ''', (current_user['id_usuario'],))
+    
+    archivos = cursor.fetchall()
+    
+    # Eliminar cada archivo del servidor y de la base de datos
+    for archivo in archivos:
+        id_archivo = archivo.id_archivo
+        nombre_archivo = archivo.nombre_archivo
+        ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
+        
+        # Eliminar archivo del sistema de archivos
+        if os.path.exists(ruta_archivo):
+            os.remove(ruta_archivo)
+        
+        # Eliminar el registro de la base de datos
+        cursor.execute('''
+            DELETE FROM Archivos 
+            WHERE id_archivo = ? 
+        ''', (id_archivo,))
+
+    # Obtener las carpetas en la papelera del usuario
+    cursor.execute('''
+        SELECT id_carpeta, nombre_carpeta 
+        FROM Carpetas 
+        WHERE id_usuario_propietario = ? AND en_papelera = 1
+    ''', (current_user['id_usuario'],))
+    
+    carpetas = cursor.fetchall()
+    
+    # Eliminar cada carpeta del servidor y de la base de datos
+    for carpeta in carpetas:
+        id_carpeta = carpeta.id_carpeta
+        nombre_carpeta = carpeta.nombre_carpeta
+        ruta_carpeta = os.path.join(UPLOAD_FOLDER, nombre_carpeta)
+
+        # Eliminar carpeta del sistema de archivos
+        if os.path.exists(ruta_carpeta):
+            # Eliminar todos los archivos dentro de la carpeta antes de eliminar la carpeta
+            for archivo in os.listdir(ruta_carpeta):
+                os.remove(os.path.join(ruta_carpeta, archivo))
+            os.rmdir(ruta_carpeta)  # Eliminar la carpeta vacía
+
+        # Eliminar el registro de la base de datos
+        cursor.execute('''
+            DELETE FROM Carpetas 
+            WHERE id_carpeta = ? 
+        ''', (id_carpeta,))
+    
+    conn.commit()
+    return jsonify({'message': 'Papelera vaciada correctamente.'}), 200
