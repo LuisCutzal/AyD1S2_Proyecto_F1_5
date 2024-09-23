@@ -335,7 +335,6 @@ def vaciar_papelera(current_user):
 
     # Función para eliminar carpetas de forma recursiva
     def eliminar_carpeta(carpeta_id):
-        # Obtener todas las subcarpetas de la carpeta actual
         cursor.execute('''
             SELECT id_carpeta, nombre_carpeta 
             FROM Carpetas 
@@ -344,11 +343,9 @@ def vaciar_papelera(current_user):
         
         subcarpetas = cursor.fetchall()
 
-        # Eliminar cada subcarpeta recursivamente
         for subcarpeta in subcarpetas:
             eliminar_carpeta(subcarpeta.id_carpeta)
-        
-        # Ahora se puede eliminar la carpeta actual
+
         cursor.execute('''
             SELECT nombre_carpeta 
             FROM Carpetas 
@@ -357,13 +354,11 @@ def vaciar_papelera(current_user):
         carpeta = cursor.fetchone()
         if carpeta:
             ruta_carpeta = os.path.join(UPLOAD_FOLDER, carpeta.nombre_carpeta)
-            # Eliminar todos los archivos dentro de la carpeta
             if os.path.exists(ruta_carpeta):
                 for archivo in os.listdir(ruta_carpeta):
                     os.remove(os.path.join(ruta_carpeta, archivo))
-                os.rmdir(ruta_carpeta)  # Eliminar la carpeta vacía
-            
-            # Eliminar el registro de la base de datos
+                os.rmdir(ruta_carpeta)
+
             cursor.execute('''
                 DELETE FROM Carpetas 
                 WHERE id_carpeta = ? 
@@ -371,24 +366,22 @@ def vaciar_papelera(current_user):
 
     # Obtener los archivos en la papelera del usuario
     cursor.execute('''
-        SELECT id_archivo, nombre_archivo 
+        SELECT id_archivo, nombre_archivo, tamano_archivo 
         FROM Archivos 
         WHERE id_usuario_propietario = ? AND en_papelera = 1
     ''', (current_user['id_usuario'],))
     
     archivos = cursor.fetchall()
-    
-    # Eliminar cada archivo del servidor y de la base de datos
+    total_tamano = sum(archivo.tamano_archivo for archivo in archivos)
+
     for archivo in archivos:
         id_archivo = archivo.id_archivo
         nombre_archivo = archivo.nombre_archivo
         ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
         
-        # Eliminar archivo del sistema de archivos
         if os.path.exists(ruta_archivo):
             os.remove(ruta_archivo)
         
-        # Eliminar el registro de la base de datos
         cursor.execute('''
             DELETE FROM Archivos 
             WHERE id_archivo = ? 
@@ -403,9 +396,100 @@ def vaciar_papelera(current_user):
     
     carpetas = cursor.fetchall()
     
-    # Eliminar cada carpeta del servidor y de la base de datos
     for carpeta in carpetas:
         eliminar_carpeta(carpeta.id_carpeta)
 
+    # Actualizar el espacio ocupado del usuario
+    cursor.execute('''
+        UPDATE Usuarios 
+        SET espacio_ocupado = espacio_ocupado - ? 
+        WHERE id_usuario = ?
+    ''', (total_tamano, current_user['id_usuario']))
+
     conn.commit()
     return jsonify({'message': 'Papelera vaciada correctamente.'}), 200
+
+
+
+#modificar datos del usuario
+
+@cliente_bp.route('/perfil/modificar', methods=['PUT'])
+@token_required
+@cliente_required
+def modificar_perfil(current_user):
+    datos = request.json
+    
+    # Obtener los datos del perfil
+    nombre = datos.get('nombre')
+    apellido = datos.get('apellido')
+    nombre_usuario = datos.get('nombre_usuario')
+    email = datos.get('email')
+    celular = datos.get('celular')
+    nacionalidad = datos.get('nacionalidad')
+    pais_residencia = datos.get('pais_residencia')
+    contrasena = datos.get('contrasena')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Actualizar solo los campos proporcionados
+    if nombre:
+        cursor.execute('''
+            UPDATE Usuarios
+            SET nombre = ?
+            WHERE id_usuario = ?
+        ''', (nombre, current_user['id_usuario']))
+    if apellido:
+        cursor.execute('''
+            UPDATE Usuarios
+            SET apellido = ?
+            WHERE id_usuario = ?
+        ''', (apellido, current_user['id_usuario']))
+
+    if nombre_usuario:
+        cursor.execute('''
+            UPDATE Usuarios
+            SET nombre_usuario = ?
+            WHERE id_usuario = ?
+        ''', (nombre_usuario, current_user['id_usuario']))
+
+    if email:
+        cursor.execute('''
+            UPDATE Usuarios
+            SET email = ?
+            WHERE id_usuario = ?
+        ''', (email, current_user['id_usuario']))
+
+    if celular:
+        cursor.execute('''
+            UPDATE Usuarios
+            SET celular = ?
+            WHERE id_usuario = ?
+        ''', (celular, current_user['id_usuario']))
+
+    if nacionalidad:
+        cursor.execute('''
+            UPDATE Usuarios
+            SET nacionalidad = ?
+            WHERE id_usuario = ?
+        ''', (nacionalidad, current_user['id_usuario']))
+
+    if pais_residencia:
+        cursor.execute('''
+            UPDATE Usuarios
+            SET pais_residencia = ?
+            WHERE id_usuario = ?
+        ''', (pais_residencia, current_user['id_usuario']))
+    
+    if contrasena:
+        cursor.execute('''
+            UPDATE Usuarios
+            SET contrasena = ?
+            WHERE id_usuario = ?
+        ''', (contrasena, current_user['id_usuario']))
+
+    conn.commit()
+
+    return jsonify({'message': 'Perfil modificado correctamente.'}), 200
+
+

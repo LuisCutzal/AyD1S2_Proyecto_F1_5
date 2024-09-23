@@ -160,6 +160,16 @@ CREATE TABLE Compartidos (
     )
 );
 
+CREATE TABLE SolicitudesEspacio (
+    id_solicitud INT PRIMARY KEY IDENTITY(1,1),
+    id_usuario INT,
+    tipo_solicitud VARCHAR(10), -- 'expandir' o 'reducir'
+    cantidad INT,
+    estado VARCHAR(10) DEFAULT 'pendiente', -- 'pendiente', 'aprobada', 'rechazada'
+    fecha_solicitud DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
+);
+
 ALTER TABLE Usuarios
 ADD fecha_ultimo_login DATETIME DEFAULT GETDATE();
 ALTER TABLE Usuarios ADD fecha_fin_periodo_gratuito DATETIME;
