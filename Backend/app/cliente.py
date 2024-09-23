@@ -333,6 +333,42 @@ def vaciar_papelera(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # Función para eliminar carpetas de forma recursiva
+    def eliminar_carpeta(carpeta_id):
+        # Obtener todas las subcarpetas de la carpeta actual
+        cursor.execute('''
+            SELECT id_carpeta, nombre_carpeta 
+            FROM Carpetas 
+            WHERE id_carpeta_padre = ?
+        ''', (carpeta_id,))
+        
+        subcarpetas = cursor.fetchall()
+
+        # Eliminar cada subcarpeta recursivamente
+        for subcarpeta in subcarpetas:
+            eliminar_carpeta(subcarpeta.id_carpeta)
+        
+        # Ahora se puede eliminar la carpeta actual
+        cursor.execute('''
+            SELECT nombre_carpeta 
+            FROM Carpetas 
+            WHERE id_carpeta = ?
+        ''', (carpeta_id,))
+        carpeta = cursor.fetchone()
+        if carpeta:
+            ruta_carpeta = os.path.join(UPLOAD_FOLDER, carpeta.nombre_carpeta)
+            # Eliminar todos los archivos dentro de la carpeta
+            if os.path.exists(ruta_carpeta):
+                for archivo in os.listdir(ruta_carpeta):
+                    os.remove(os.path.join(ruta_carpeta, archivo))
+                os.rmdir(ruta_carpeta)  # Eliminar la carpeta vacía
+            
+            # Eliminar el registro de la base de datos
+            cursor.execute('''
+                DELETE FROM Carpetas 
+                WHERE id_carpeta = ? 
+            ''', (carpeta_id,))
+
     # Obtener los archivos en la papelera del usuario
     cursor.execute('''
         SELECT id_archivo, nombre_archivo 
@@ -360,7 +396,7 @@ def vaciar_papelera(current_user):
 
     # Obtener las carpetas en la papelera del usuario
     cursor.execute('''
-        SELECT id_carpeta, nombre_carpeta 
+        SELECT id_carpeta 
         FROM Carpetas 
         WHERE id_usuario_propietario = ? AND en_papelera = 1
     ''', (current_user['id_usuario'],))
@@ -369,22 +405,7 @@ def vaciar_papelera(current_user):
     
     # Eliminar cada carpeta del servidor y de la base de datos
     for carpeta in carpetas:
-        id_carpeta = carpeta.id_carpeta
-        nombre_carpeta = carpeta.nombre_carpeta
-        ruta_carpeta = os.path.join(UPLOAD_FOLDER, nombre_carpeta)
+        eliminar_carpeta(carpeta.id_carpeta)
 
-        # Eliminar carpeta del sistema de archivos
-        if os.path.exists(ruta_carpeta):
-            # Eliminar todos los archivos dentro de la carpeta antes de eliminar la carpeta
-            for archivo in os.listdir(ruta_carpeta):
-                os.remove(os.path.join(ruta_carpeta, archivo))
-            os.rmdir(ruta_carpeta)  # Eliminar la carpeta vacía
-
-        # Eliminar el registro de la base de datos
-        cursor.execute('''
-            DELETE FROM Carpetas 
-            WHERE id_carpeta = ? 
-        ''', (id_carpeta,))
-    
     conn.commit()
     return jsonify({'message': 'Papelera vaciada correctamente.'}), 200
