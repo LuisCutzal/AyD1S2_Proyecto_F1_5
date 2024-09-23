@@ -218,3 +218,28 @@ def remove_user_data(current_user, id_usuario):
         return 500
     finally:
         conn.close()
+
+
+@admin_bp.route('/admin/solicitudes/espacio', methods=['GET'])
+@token_required
+@admin_required
+def ver_solicitudes_espacio(current_user):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT s.id_solicitud, u.nombre, s.tipo_solicitud, s.cantidad, s.estado, s.fecha_solicitud
+        FROM SolicitudesEspacio s
+        JOIN Usuarios u ON s.id_usuario = u.id_usuario
+    ''')
+    
+    solicitudes = cursor.fetchall()
+    
+    return jsonify([{
+        'id_solicitud': solicitud.id_solicitud,
+        'nombre_usuario': solicitud.nombre,
+        'tipo_solicitud': solicitud.tipo_solicitud,
+        'cantidad': solicitud.cantidad,
+        'estado': solicitud.estado,
+        'fecha_solicitud': solicitud.fecha_solicitud
+    } for solicitud in solicitudes]), 200

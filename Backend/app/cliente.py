@@ -493,3 +493,25 @@ def modificar_perfil(current_user):
     return jsonify({'message': 'Perfil modificado correctamente.'}), 200
 
 
+@cliente_bp.route('/solicitar/espacio', methods=['POST'])
+@token_required
+@cliente_required
+def solicitar_espacio(current_user):
+    datos = request.json
+    tipo_solicitud = datos.get('tipo_solicitud')  # 'expandir' o 'reducir'
+    cantidad = datos.get('cantidad')
+
+    if tipo_solicitud not in ['expandir', 'reducir']:
+        return jsonify({'error': 'Tipo de solicitud inválido.'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Insertar la solicitud en la base de datos
+    cursor.execute('''
+        INSERT INTO SolicitudesEspacio (id_usuario, tipo_solicitud, cantidad)
+        VALUES (?, ?, ?)
+    ''', (current_user['id_usuario'], tipo_solicitud, cantidad))
+    conn.commit()
+
+    return jsonify({'message': 'Solicitud de espacio realizada correctamente.'}), 201
