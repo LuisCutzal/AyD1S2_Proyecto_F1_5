@@ -103,28 +103,31 @@ def update_user_space(current_user, id_usuario):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Obtener el espacio ocupado actual
-    cursor.execute('SELECT espacio_ocupado FROM Usuarios WHERE id_usuario = ?', (id_usuario,))
-    user_data = cursor.fetchone()
+    try:
+        # Obtener el espacio ocupado actual
+        cursor.execute('SELECT espacio_ocupado FROM Usuarios WHERE id_usuario = ?', (id_usuario,))
+        user_data = cursor.fetchone()
 
-    if not user_data:
-        return jsonify({"error": "Usuario no encontrado"}), 404
+        if not user_data:
+            return jsonify({"error": "Usuario no encontrado"}), 404
 
-    espacio_ocupado = user_data[0]
+        espacio_ocupado = user_data[0]
 
-    # Validación: Si el nuevo espacio es menor que el espacio ocupado, no se puede reducir
-    if nuevo_espacio_asignado < espacio_ocupado:
-        return jsonify({
-            "error": "No se puede reducir el espacio porque el espacio ocupado ({}) es mayor que el nuevo espacio asignado ({})".format(espacio_ocupado, nuevo_espacio_asignado)
-        }), 400
+        # Validación: Si el nuevo espacio es menor que el espacio ocupado, no se puede reducir
+        if nuevo_espacio_asignado < espacio_ocupado:
+            return jsonify({
+                "error": "No se puede reducir el espacio porque el espacio ocupado ({}) es mayor que el nuevo espacio asignado ({})".format(espacio_ocupado, nuevo_espacio_asignado)
+            }), 400
 
-    # Actualizar el espacio asignado
-    cursor.execute('UPDATE Usuarios SET espacio_asignado = ? WHERE id_usuario = ?',
-                   (nuevo_espacio_asignado, id_usuario))
-    conn.commit()
-    conn.close()
-
-    return jsonify({"message": "Espacio asignado actualizado correctamente"}), 200
+        # Actualizar el espacio asignado
+        cursor.execute('UPDATE Usuarios SET espacio_asignado = ? WHERE id_usuario = ?',
+                       (nuevo_espacio_asignado, id_usuario))
+        conn.commit()
+        return jsonify({"message": "Espacio actualizado correctamente"}), 200
+        
+    finally:
+        # Asegúrate de cerrar la conexión en todos los casos
+        conn.close()
 
 
 @admin_bp.route('/users/inactive', methods=['GET'])
