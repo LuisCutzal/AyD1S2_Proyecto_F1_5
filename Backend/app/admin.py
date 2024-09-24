@@ -141,15 +141,21 @@ def get_inactive_users(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Buscar usuarios cuyo 'fecha_ultimo_login' sea anterior a 'one_month_ago'
-    cursor.execute('''
-        SELECT id_usuario, nombre_usuario, email, fecha_ultimo_login 
-        FROM Usuarios 
-        WHERE fecha_ultimo_login IS NULL OR fecha_ultimo_login < ?
-    ''', (one_month_ago,))
+    try:
+        # Buscar usuarios cuyo 'fecha_ultimo_login' sea anterior a 'one_month_ago' o es NULL
+        cursor.execute('''
+            SELECT id_usuario, nombre_usuario, email, fecha_ultimo_login 
+            FROM Usuarios 
+            WHERE fecha_ultimo_login IS NULL OR fecha_ultimo_login < ?
+        ''', (one_month_ago,))
 
-    inactive_users = cursor.fetchall()
-    conn.close()
+        inactive_users = cursor.fetchall()
+
+    except Exception as e:
+        return jsonify({"error": "Error al obtener usuarios inactivos"}), 500
+
+    finally:
+        conn.close()
 
     # Construir la respuesta en formato JSON
     users_list = [
@@ -157,7 +163,7 @@ def get_inactive_users(current_user):
             "id_usuario": user[0],
             "nombre_usuario": user[1],
             "email": user[2],
-            "fecha_ultimo_login": user[3].strftime('%Y-%m-%d %H:%M:%S') if user[3] else 'Nunca'
+            "fecha_ultimo_login": user[3].strftime('%Y-%m-%dT%H:%M:%S') if user[3] else 'Nunca'
         } 
         for user in inactive_users
     ]
