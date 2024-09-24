@@ -98,7 +98,6 @@ def login_user():
             'id_rol': user[2],  # Agregar el rol del usuario al token
             'nombre_usuario': user[3]
         }, current_app.config['SECRET_KEY'], algorithm='HS256')
-        
         return jsonify({"message": "Login successful", "token": token}), 200
     else:
         return jsonify({"error": "Nombre de usuario/correo o contraseña son inválidos."}), 401

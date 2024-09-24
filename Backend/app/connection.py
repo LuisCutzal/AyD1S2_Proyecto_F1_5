@@ -3,9 +3,6 @@ from dotenv import load_dotenv  # Importamos python-dotenv para cargar el .env
 import os
 # Configuración de la conexión a la base de datos
 load_dotenv()
-server = 'DESKTOP-E6KH831' 
-database = 'AYD_DataCenter'
-
 def get_db_connection():
     try:
         # Conexión al servidor SQL con autenticación de Windows
