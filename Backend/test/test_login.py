@@ -11,6 +11,7 @@ class TestLogin(unittest.TestCase):  # Class name updated
         self.app.register_blueprint(auth_bp)
         # Crear un cliente de pruebas
         self.client = self.app.test_client()
+
     def test_login_exitoso(self):
         # Payload de la solicitud
         payload = {
@@ -29,6 +30,31 @@ class TestLogin(unittest.TestCase):  # Class name updated
         self.assertIn('token', data)
         self.assertEqual(data['message'], 'Login successful')
 
+    def test_login_credenciales_invalidas(self):
+        payload = {
+            "identificador": "usuario_incorrecto",
+            "contrasena": "contraseña_incorrecta"
+        }
 
+        response = self.client.post('/login',
+                                    data=json.dumps(payload),
+                                    content_type='application/json')
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.get_json(), {"error": "Nombre de usuario/correo o contraseña son inválidos."})
+    
+    def test_login_faltan_credenciales(self):
+        payload = {
+            "identificador": "usuario1"
+            # Falta 'contrasena'
+        }
+
+        response = self.client.post('/login',
+                                    data=json.dumps(payload),
+                                    content_type='application/json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json(), {"error": "Nombre de usuario/correo y contraseña son requeridos"})
+    
 if __name__ == '__main__':
     unittest.main()
