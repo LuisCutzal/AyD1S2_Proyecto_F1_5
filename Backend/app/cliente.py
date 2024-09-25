@@ -300,6 +300,10 @@ def eliminar_archivo(current_user, id_archivo):
         SET en_papelera = 1
         WHERE id_archivo = ? AND id_usuario_propietario = ?
     ''', (id_archivo, current_user['id_usuario']))
+
+    if cursor.rowcount == 0:
+        return jsonify({'error': 'Archivo no encontrado.'}), 404
+
     conn.commit()
     return jsonify({'message': 'Archivo movido a la papelera.'}), 200
 
