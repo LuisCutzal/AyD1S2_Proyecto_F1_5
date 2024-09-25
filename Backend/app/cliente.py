@@ -264,18 +264,28 @@ def obtener_tamano(archivo):
 def descargar_archivo(current_user, id_archivo):
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Verificar si el archivo existe y pertenece al usuario
-    cursor.execute(''' 
-        SELECT nombre_archivo 
-        FROM Archivos 
-        WHERE id_archivo = ? AND id_usuario_propietario = ? AND en_papelera = 0
-    ''', (id_archivo, current_user['id_usuario']))
-    archivo = cursor.fetchone()
-    if archivo is None:
-        return jsonify({'error': 'Archivo no encontrado.'}), 404
-    # Ruta completa del archivo
-    ruta_archivo = os.path.join(UPLOAD_FOLDER, archivo.nombre_archivo)
-    return send_file(ruta_archivo, as_attachment=True)
+    
+    try:
+        # Verificar si el archivo existe y pertenece al usuario
+        cursor.execute(''' 
+            SELECT nombre_archivo 
+            FROM Archivos 
+            WHERE id_archivo = ? AND id_usuario_propietario = ? AND en_papelera = 0
+        ''', (id_archivo, current_user['id_usuario']))
+        archivo = cursor.fetchone()
+
+        if archivo is None:
+            return jsonify({'error': 'Archivo no encontrado.'}), 404
+
+        # Acceder al nombre del archivo desde la tupla
+        nombre_archivo = archivo[0]  # Accediendo al primer (y único) elemento de la tupla
+        ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
+
+        return send_file(ruta_archivo, as_attachment=True)
+    finally:
+        cursor.close()
+        conn.close()  # Asegúrate de cerrar la conexión
+
 
 
 #eliminar archivo
