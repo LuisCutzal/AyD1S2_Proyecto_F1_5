@@ -152,7 +152,7 @@ def get_inactive_users(current_user):
         inactive_users = cursor.fetchall()
 
     except Exception as e:
-        return jsonify({"error": "Error al obtener usuarios inactivos"}), 500
+        return 500
 
     finally:
         conn.close()
@@ -198,19 +198,14 @@ def notify_user_removal(current_user, id_usuario):
 @token_required
 @admin_required
 def remove_user_data(current_user, id_usuario):
-    # Conexión a la base de datos
     conn = get_db_connection()
     cursor = conn.cursor()
-
-    # Verificar si el usuario existe
-    cursor.execute('SELECT * FROM Usuarios WHERE id_usuario = ?', (id_usuario,))
-    user_data = cursor.fetchone()
-
-    if not user_data:
-        return jsonify({"error": "Usuario no encontrado"}), 404
-
     try:
-        # Eliminar datos de otras tablas relacionadas
+        # Verificar si el usuario existe
+        cursor.execute('SELECT * FROM Usuarios WHERE id_usuario = ?', (id_usuario,))
+        user_data = cursor.fetchone()
+        if not user_data:
+            return jsonify({"error": "Usuario no encontrado"}), 404
         cursor.execute('DELETE FROM Archivos WHERE id_usuario_propietario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Carpetas WHERE id_usuario_propietario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Etiquetas WHERE id_usuario = ?', (id_usuario,))
@@ -218,16 +213,19 @@ def remove_user_data(current_user, id_usuario):
         cursor.execute('DELETE FROM Actividades_Recientes WHERE id_usuario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Backups_Cifrados WHERE id_usuario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Compartidos WHERE id_usuario_propietario = ? OR id_usuario_destinatario = ?', (id_usuario, id_usuario))
-        cursor.execute('UPDATE Usuarios SET espacio_ocupado = 0 WHERE id_usuario = ?', (id_usuario,))
-        conn.commit()  # Hacer commit para guardar los cambios
-        return jsonify({"message": "Toda la información del usuario ha sido eliminada correctamente."}), 200
 
+        cursor.execute('UPDATE Usuarios SET espacio_ocupado = 0 WHERE id_usuario = ?', (id_usuario,))
+        conn.commit()
+        return jsonify({"message": "Toda la información del usuario ha sido eliminada correctamente."}), 200
     except Exception as e:
-        conn.rollback()  # Revierte en caso de error
+        conn.rollback()
         return 500
+
     finally:
+        # Cerrar la conexión
         conn.close()
 
+        
 
 @admin_bp.route('/admin/solicitudes/espacio', methods=['GET'])
 @token_required
