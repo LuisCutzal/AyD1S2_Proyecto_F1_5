@@ -6,54 +6,67 @@ from werkzeug.utils import secure_filename
 
 cliente_bp = Blueprint('cliente', __name__)
 
-@cliente_bp.route('/dashboard', methods=['GET']) #dashbord para el administrador
+@cliente_bp.route('/dashboard', methods=['GET'])  
 @token_required
 @cliente_required
 def cliente_route(current_user):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    # Obtener las carpetas y archivos del usuario
-    cursor.execute('''
-        SELECT id_carpeta, nombre_carpeta, id_carpeta_padre
-        FROM Carpetas
-        WHERE id_usuario_propietario = ? AND en_papelera = 0
-    ''', (current_user['id_usuario'],))
-    carpetas = cursor.fetchall()
+        # Obtener las carpetas y archivos del usuario
+        try:
+            cursor.execute('''
+                SELECT id_carpeta, nombre_carpeta, id_carpeta_padre
+                FROM Carpetas
+                WHERE id_usuario_propietario = ? AND en_papelera = 0
+            ''', (current_user['id_usuario'],))
+            carpetas = cursor.fetchall()
 
-    cursor.execute('''
-        SELECT id_archivo, nombre_archivo, id_carpeta, tamano_mb
-        FROM Archivos
-        WHERE id_usuario_propietario = ? AND en_papelera = 0
-    ''', (current_user['id_usuario'],))
-    archivos = cursor.fetchall()
+            cursor.execute('''
+                SELECT id_archivo, nombre_archivo, id_carpeta, tamano_mb
+                FROM Archivos
+                WHERE id_usuario_propietario = ? AND en_papelera = 0
+            ''', (current_user['id_usuario'],))
+            archivos = cursor.fetchall()
 
-    # Obtener información del espacio del usuario
-    cursor.execute('''
-        SELECT espacio_asignado, espacio_ocupado 
-        FROM Usuarios 
-        WHERE id_usuario = ?
-    ''', (current_user['id_usuario'],))
-    usuario_info = cursor.fetchone()
+            # Obtener información del espacio del usuario
+            cursor.execute('''
+                SELECT espacio_asignado, espacio_ocupado 
+                FROM Usuarios 
+                WHERE id_usuario = ?
+            ''', (current_user['id_usuario'],))
+            usuario_info = cursor.fetchone()
 
-    if usuario_info:
-        espacio_total = usuario_info.espacio_asignado
-        espacio_usado = usuario_info.espacio_ocupado
-        espacio_libre = espacio_total - espacio_usado
-    else:
-        espacio_total = 0
-        espacio_usado = 0
-        espacio_libre = 0
+            if usuario_info:
+                espacio_total = usuario_info[0]
+                espacio_usado = usuario_info[1]
+                espacio_libre = espacio_total - espacio_usado
+            else:
+                espacio_total = 0
+                espacio_usado = 0
+                espacio_libre = 0
 
-    # Construir la respuesta en JSON con carpetas, archivos y la información del espacio
-    return jsonify({
-        'carpetas': [{'id_carpeta': c.id_carpeta, 'nombre': c.nombre_carpeta, 'padre': c.id_carpeta_padre} for c in carpetas],
-        'archivos': [{'id_archivo': a.id_archivo, 'nombre': a.nombre_archivo, 'carpeta': a.id_carpeta, 'tamano_mb': a.tamano_mb} for a in archivos],
-        'espacio_total': espacio_total,
-        'espacio_usado': espacio_usado,
-        'espacio_libre': espacio_libre
-    })
+            return jsonify({
+                'carpetas': [{'id_carpeta': c[0], 'nombre': c[1], 'padre': c[2]} for c in carpetas],
+                'archivos': [{'id_archivo': a[0], 'nombre': a[1], 'carpeta': a[2], 'tamano_mb': a[3]} for a in archivos],
+                'espacio_total': espacio_total,
+                'espacio_usado': espacio_usado,
+                'espacio_libre': espacio_libre
+            })
 
+        except Exception as e:
+            return jsonify({'error': 'Error en la base de datos'}), 500
+
+    except Exception as e:
+        return jsonify({'error': 'Error en la conexión a la base de datos'}), 500
+
+    finally:
+        try:
+            cursor.close()
+            conn.close()  # Asegúrate de cerrar siempre la conexión
+        except:
+            pass  # Opcionalmente maneja errores de cierre aquí
 
 #crear capeta
 @cliente_bp.route('/carpeta', methods=['POST'])
