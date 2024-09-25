@@ -193,7 +193,7 @@ def subir_archivo(current_user):
         return jsonify({'error': 'Nombre de archivo no válido.'}), 400
     
     datos = request.form
-    id_carpeta = datos.get('id_carpeta')
+    id_carpeta = int(datos.get('id_carpeta')) if datos.get('id_carpeta') else None
     conn = get_db_connection()
     cursor = conn.cursor()
     
