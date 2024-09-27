@@ -438,15 +438,15 @@ def vaciar_papelera(current_user):
 
 
 
-#modificar datos del usuario
+# modificar datos del usuario
 
 @cliente_bp.route('/perfil/modificar', methods=['PUT'])
 @token_required
 @cliente_required
 def modificar_perfil(current_user):
+    if not current_user:
+        return jsonify({'error': 'El usuario no existe.'}), 404  # Asegúrate de que este mensaje sea correcto
     datos = request.json
-    
-    # Obtener los datos del perfil
     nombre = datos.get('nombre')
     apellido = datos.get('apellido')
     nombre_usuario = datos.get('nombre_usuario')
@@ -455,67 +455,44 @@ def modificar_perfil(current_user):
     nacionalidad = datos.get('nacionalidad')
     pais_residencia = datos.get('pais_residencia')
     contrasena = datos.get('contrasena')
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
 
-    # Actualizar solo los campos proporcionados
-    if nombre:
-        cursor.execute('''
-            UPDATE Usuarios
-            SET nombre = ?
-            WHERE id_usuario = ?
-        ''', (nombre, current_user['id_usuario']))
-    if apellido:
-        cursor.execute('''
-            UPDATE Usuarios
-            SET apellido = ?
-            WHERE id_usuario = ?
-        ''', (apellido, current_user['id_usuario']))
+    conn = None
+    cursor = None
 
-    if nombre_usuario:
-        cursor.execute('''
-            UPDATE Usuarios
-            SET nombre_usuario = ?
-            WHERE id_usuario = ?
-        ''', (nombre_usuario, current_user['id_usuario']))
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    if email:
-        cursor.execute('''
-            UPDATE Usuarios
-            SET email = ?
-            WHERE id_usuario = ?
-        ''', (email, current_user['id_usuario']))
+        # Actualizar solo los campos proporcionados
+        if nombre:
+            cursor.execute('''UPDATE Usuarios SET nombre = ? WHERE id_usuario = ?''', (nombre, current_user['id_usuario']))
+        if apellido:
+            cursor.execute('''UPDATE Usuarios SET apellido = ? WHERE id_usuario = ?''', (apellido, current_user['id_usuario']))
+        if nombre_usuario:
+            cursor.execute('''UPDATE Usuarios SET nombre_usuario = ? WHERE id_usuario = ?''', (nombre_usuario, current_user['id_usuario']))
+        if email:
+            cursor.execute('''UPDATE Usuarios SET email = ? WHERE id_usuario = ?''', (email, current_user['id_usuario']))
+        if celular:
+            cursor.execute('''UPDATE Usuarios SET celular = ? WHERE id_usuario = ?''', (celular, current_user['id_usuario']))
+        if nacionalidad:
+            cursor.execute('''UPDATE Usuarios SET nacionalidad = ? WHERE id_usuario = ?''', (nacionalidad, current_user['id_usuario']))
+        if pais_residencia:
+            cursor.execute('''UPDATE Usuarios SET pais_residencia = ? WHERE id_usuario = ?''', (pais_residencia, current_user['id_usuario']))
+        if contrasena:
+            cursor.execute('''UPDATE Usuarios SET contrasena = ? WHERE id_usuario = ?''', (contrasena, current_user['id_usuario']))
 
-    if celular:
-        cursor.execute('''
-            UPDATE Usuarios
-            SET celular = ?
-            WHERE id_usuario = ?
-        ''', (celular, current_user['id_usuario']))
+        conn.commit()
 
-    if nacionalidad:
-        cursor.execute('''
-            UPDATE Usuarios
-            SET nacionalidad = ?
-            WHERE id_usuario = ?
-        ''', (nacionalidad, current_user['id_usuario']))
+    except Exception as e:
+        if conn:
+            conn.rollback()  # Revertir los cambios en caso de error
+        return jsonify({'error': 'Error al modificar el perfil: ' + str(e)}), 500
 
-    if pais_residencia:
-        cursor.execute('''
-            UPDATE Usuarios
-            SET pais_residencia = ?
-            WHERE id_usuario = ?
-        ''', (pais_residencia, current_user['id_usuario']))
-    
-    if contrasena:
-        cursor.execute('''
-            UPDATE Usuarios
-            SET contrasena = ?
-            WHERE id_usuario = ?
-        ''', (contrasena, current_user['id_usuario']))
-
-    conn.commit()
+    finally:
+        if cursor:
+            cursor.close()  # Asegúrate de cerrar el cursor
+        if conn:
+            conn.close()  # Asegúrate de cerrar la conexión
 
     return jsonify({'message': 'Perfil modificado correctamente.'}), 200
 
