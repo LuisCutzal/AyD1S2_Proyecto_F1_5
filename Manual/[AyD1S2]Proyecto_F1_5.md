@@ -523,8 +523,47 @@ Para almacenar y administrar datos.
 ![](img/diagramaActividades/BackupCrifradoCliente.png)
 
 
+# Arquitectura de sistema
+
+## Capas de la Arquitectura
+
+**Presentación:** La capa de presentación se encarga de interactuar con el usuario, presentando la interfaz de usuario y recopilando la entrada del usuario.
+**Aplicación:** La capa de aplicación se encarga de procesar la lógica del negocio y realizar las operaciones necesarias para satisfacer las solicitudes del usuario.
+**Dominio:** La capa de dominio se encarga de almacenar y administrar los datos del negocio, incluyendo la lógica de negocio y las reglas de negocio.
+**Infraestructura:** La capa de infraestructura se encarga de proporcionar los servicios básicos necesarios para que el sistema funcione, como la gestión de la base de datos, la autenticación y la autorización.
+
+
+## Patron de Arquitectura
+
+**Arquitectura de Eventos:** Este patrón se utilizo para diseñar el sistema que se basa en eventos y reacciones a esos eventos.
+
+
+## Componentes de la Arquitectura
+
+**Servidor:** El servidor se encargan de procesar las solicitudes y proporcionar los servicios necesarios para que el sistema funcione.
+
+**Base de datos:** La bases de datos se encargan de almacenar y administrar los datos del negocio.
+
+**API:** La API se encargan de proporcionar una interfaz para que los componentes del sistema se comuniquen entre sí.
+
+
+## Ventajas y Desventajas
+
+**Flexibilidad:** La arquitectura de sistemas permite cambiar o reemplazar componentes individuales sin afectar el resto del sistema.
+
+**Escalabilidad:** La arquitectura de sistemas permite escalar individualmente los componentes para satisfacer las necesidades cambiantes del sistema.
+
+**Seguridad:** La arquitectura de sistemas permite implementar medidas de seguridad adicionales para proteger el sistema.
+
+Sin embargo, también hay desventajas, como:
+
+**Complejidad:** La arquitectura de sistemas puede ser compleja y difícil de entender.
+
+**Costo:** La arquitectura de sistemas puede requerir una mayor inversión en recursos y personal.
+
 # Diagrama de despliegue
 ![](img/diagramaDespliegue/DiagramaDespliegue.png)
+
 
 
 
