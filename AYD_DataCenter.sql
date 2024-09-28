@@ -173,3 +173,6 @@ CREATE TABLE SolicitudesEspacio (
 ALTER TABLE Usuarios
 ADD fecha_ultimo_login DATETIME DEFAULT GETDATE();
 ALTER TABLE Usuarios ADD fecha_fin_periodo_gratuito DATETIME;
+
+ALTER TABLE Archivos
+ADD url_archivo NVARCHAR(500) NULL;

@@ -3,6 +3,8 @@ from app.connection import get_db_connection
 from app.decorators import token_required, cliente_required
 import os
 from werkzeug.utils import secure_filename
+from app.cargaBuket import uploadFileBucket
+from datetime import datetime
 
 cliente_bp = Blueprint('cliente', __name__)
 
@@ -180,8 +182,8 @@ def modificar_carpeta(current_user, id_carpeta):
 
 
 # Ruta donde se almacenarán los archivos
-UPLOAD_FOLDER = 'C:\\Users\\cutza\\Desktop\\usac\\2024\\SegundoSemestre2024\\AyD\\lab\\pruebasubidas'
-
+#UPLOAD_FOLDER = 'C:\\Users\\cutza\\Desktop\\usac\\2024\\SegundoSemestre2024\\AyD\\lab\\pruebasubidas'
+# no usar upload folder y borrar todo lo que tenga que ver con eso 
 @cliente_bp.route('/archivo/subir', methods=['POST'])
 @token_required
 @cliente_required
@@ -197,8 +199,19 @@ def subir_archivo(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
     
+    # Obtener el tamaño del archivo en MB antes de subirlo
+    tamano_mb_mb = obtener_tamano(archivo)
+    
+    # Separar el nombre del archivo de su extensión
+    nombre_archivo, extension = os.path.splitext(secure_filename(archivo.filename))
+    
+    # Generar timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+    
+    # Unir el nombre del archivo con el timestamp antes de la extensión
+    nuevo_nombre_archivo = f"{nombre_archivo}_{timestamp}{extension}"
+    
     if id_carpeta:
-        # Verificar si la carpeta existe y pertenece al usuario
         cursor.execute('''
             SELECT id_carpeta, nombre_carpeta
             FROM Carpetas
@@ -208,41 +221,31 @@ def subir_archivo(current_user):
         
         if not carpeta:
             return jsonify({'error': 'La carpeta no existe o no pertenece al usuario.'}), 404
-        
-        # Usar 'carpeta[1]' para obtener el nombre de la carpeta
-        ruta_carpeta = os.path.join(UPLOAD_FOLDER, carpeta[1])  # Aquí se usa 'carpeta[1]' (nombre_carpeta)
-        
-        # Crear la carpeta en el sistema de archivos si no existe
-        if not os.path.exists(ruta_carpeta):
-            os.makedirs(ruta_carpeta)
-        
-        # Guardar el archivo en la carpeta especificada
-        ruta_archivo = os.path.join(ruta_carpeta, secure_filename(archivo.filename))
-    
+
+        # Generar ruta del archivo en la carpeta
+        ruta_archivo_bucket = f"{carpeta[1]}/{nuevo_nombre_archivo}"
+        url_archivo = uploadFileBucket(archivo, ruta_archivo_bucket)
+
     else:
-        # Si no se proporciona carpeta, guardar en la raíz (UPLOAD_FOLDER)
-        ruta_archivo = os.path.join(UPLOAD_FOLDER, secure_filename(archivo.filename))
-    
-    # Guardar el archivo en la ruta generada
-    archivo.save(ruta_archivo)
-    
-    # Obtener el tamaño del archivo en MB
-    tamano_archivo_mb = obtener_tamano(archivo)  # Asegúrate de que 'obtener_tamano' esté definido correctamente
-    
-    # Insertar el archivo en la base de datos
+        # Subir a la raíz del bucket si no hay carpeta
+        url_archivo = uploadFileBucket(archivo, nuevo_nombre_archivo)
+
+    if not url_archivo:
+        return jsonify({'error': 'Error al subir el archivo al bucket de AWS.'}), 500
+
+    # Insertar los datos del archivo en la base de datos
     cursor.execute('''
-        INSERT INTO Archivos (nombre_archivo, id_usuario_propietario, id_carpeta, tamano_mb)
-        VALUES (?, ?, ?, ?)
-    ''', (secure_filename(archivo.filename), current_user['id_usuario'], id_carpeta, tamano_archivo_mb))
-    
-    # Sumar el tamaño del archivo al espacio ocupado del usuario
+        INSERT INTO Archivos (nombre_archivo, id_usuario_propietario, id_carpeta, tamano_mb, url_archivo)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (nuevo_nombre_archivo, current_user['id_usuario'], id_carpeta, tamano_mb_mb, url_archivo))
+
+    # Actualizar espacio ocupado del usuario
     cursor.execute('''
         UPDATE Usuarios
         SET espacio_ocupado = espacio_ocupado + ?
         WHERE id_usuario = ?
-    ''', (tamano_archivo_mb, current_user['id_usuario']))
+    ''', (tamano_mb_mb, current_user['id_usuario']))
 
-    # Guardar los cambios en la base de datos
     conn.commit()
 
     return jsonify({'message': 'Archivo subido exitosamente.'}), 201
@@ -258,33 +261,33 @@ def obtener_tamano(archivo):
     return tamano
 
 
-@cliente_bp.route('/archivo/descargar/<int:id_archivo>', methods=['GET'])
-@token_required
-@cliente_required
-def descargar_archivo(current_user, id_archivo):
-    conn = get_db_connection()
-    cursor = conn.cursor()
+# @cliente_bp.route('/archivo/descargar/<int:id_archivo>', methods=['GET'])
+# @token_required
+# @cliente_required
+# def descargar_archivo(current_user, id_archivo):
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
     
-    try:
-        # Verificar si el archivo existe y pertenece al usuario
-        cursor.execute(''' 
-            SELECT nombre_archivo 
-            FROM Archivos 
-            WHERE id_archivo = ? AND id_usuario_propietario = ? AND en_papelera = 0
-        ''', (id_archivo, current_user['id_usuario']))
-        archivo = cursor.fetchone()
+#     try:
+#         # Verificar si el archivo existe y pertenece al usuario
+#         cursor.execute(''' 
+#             SELECT nombre_archivo 
+#             FROM Archivos 
+#             WHERE id_archivo = ? AND id_usuario_propietario = ? AND en_papelera = 0
+#         ''', (id_archivo, current_user['id_usuario']))
+#         archivo = cursor.fetchone()
 
-        if archivo is None:
-            return jsonify({'error': 'Archivo no encontrado.'}), 404
+#         if archivo is None:
+#             return jsonify({'error': 'Archivo no encontrado.'}), 404
 
-        # Acceder al nombre del archivo desde la tupla
-        nombre_archivo = archivo[0]  # Accediendo al primer (y único) elemento de la tupla
-        ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
+#         # Acceder al nombre del archivo desde la tupla
+#         nombre_archivo = archivo[0]  # Accediendo al primer (y único) elemento de la tupla
+#         ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
 
-        return send_file(ruta_archivo, as_attachment=True)
-    finally:
-        cursor.close()
-        conn.close()  # Asegúrate de cerrar la conexión
+#         return send_file(ruta_archivo, as_attachment=True)
+#     finally:
+#         cursor.close()
+#         conn.close()  # Asegúrate de cerrar la conexión
 
 
 
@@ -315,13 +318,19 @@ def modificar_archivo(current_user, id_archivo):
     datos = request.json
     nuevo_nombre = datos.get('nombre_archivo')
     
+    if not nuevo_nombre:
+        return jsonify({'error': 'El nuevo nombre del archivo es requerido.'}), 400
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute(''' 
+    
+    # Verificar si el archivo existe y pertenece al usuario
+    cursor.execute('''
         SELECT nombre_archivo, en_papelera 
         FROM Archivos 
-        WHERE id_archivo = ? AND id_usuario_propietario = ? 
+        WHERE id_archivo = ? AND id_usuario_propietario = ?
     ''', (id_archivo, current_user['id_usuario']))
+    
     archivo = cursor.fetchone()
     
     if archivo is None:
@@ -333,24 +342,23 @@ def modificar_archivo(current_user, id_archivo):
     # Extraer la extensión del archivo existente
     nombre_viejo = archivo[0]
     extension = os.path.splitext(nombre_viejo)[1]  # Obtener la extensión
-    
-    # Renombrar el archivo en el servidor usando la misma extensión
-    nombre_nuevo = os.path.join(UPLOAD_FOLDER, secure_filename(nuevo_nombre) + extension)
-    ruta_vieja = os.path.join(UPLOAD_FOLDER, nombre_viejo)
-    
-    os.rename(ruta_vieja, nombre_nuevo)
-    
-    # Actualizar el nombre del archivo en la base de datos
-    cursor.execute(''' 
+
+    # Obtener la fecha y hora actual para agregar al nombre
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+
+    # Generar el nuevo nombre con el timestamp
+    nombre_nuevo = f"{secure_filename(nuevo_nombre)}_{timestamp}{extension}"
+
+    # Actualizar solo el nombre en la base de datos
+    cursor.execute('''
         UPDATE Archivos 
         SET nombre_archivo = ? 
-        WHERE id_archivo = ? AND id_usuario_propietario = ? 
-    ''', (secure_filename(nuevo_nombre) + extension, id_archivo, current_user['id_usuario']))
-    
+        WHERE id_archivo = ? AND id_usuario_propietario = ?
+    ''', (nombre_nuevo, id_archivo, current_user['id_usuario']))
+
     conn.commit()
     
-    return jsonify({'message': 'Nombre del archivo modificado correctamente.'}), 200
-
+    return jsonify({'message': 'Nombre del archivo modificado correctamente en la base de datos.', 'nuevo_nombre': nombre_nuevo}), 200
 
 #vaciar papelera
 @cliente_bp.route('/papelera/vaciar', methods=['DELETE'])
@@ -360,54 +368,19 @@ def vaciar_papelera(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Función para eliminar carpetas de forma recursiva
-    def eliminar_carpeta(carpeta_id):
-        cursor.execute('''
-            SELECT id_carpeta, nombre_carpeta 
-            FROM Carpetas 
-            WHERE id_carpeta_padre = ?
-        ''', (carpeta_id,))
-        
-        subcarpetas = cursor.fetchall()
-
-        for subcarpeta in subcarpetas:
-            eliminar_carpeta(subcarpeta.id_carpeta)
-
-        cursor.execute('''
-            SELECT nombre_carpeta 
-            FROM Carpetas 
-            WHERE id_carpeta = ?
-        ''', (carpeta_id,))
-        carpeta = cursor.fetchone()
-        if carpeta:
-            ruta_carpeta = os.path.join(UPLOAD_FOLDER, carpeta.nombre_carpeta)
-            if os.path.exists(ruta_carpeta):
-                for archivo in os.listdir(ruta_carpeta):
-                    os.remove(os.path.join(ruta_carpeta, archivo))
-                os.rmdir(ruta_carpeta)
-
-            cursor.execute('''
-                DELETE FROM Carpetas 
-                WHERE id_carpeta = ? 
-            ''', (carpeta_id,))
-
     # Obtener los archivos en la papelera del usuario
     cursor.execute('''
-        SELECT id_archivo, nombre_archivo, tamano_archivo 
+        SELECT id_archivo, nombre_archivo, tamano_mb 
         FROM Archivos 
         WHERE id_usuario_propietario = ? AND en_papelera = 1
     ''', (current_user['id_usuario'],))
     
     archivos = cursor.fetchall()
-    total_tamano = sum(archivo.tamano_archivo for archivo in archivos)
+    total_tamano = sum(archivo.tamano_mb for archivo in archivos)
 
+    # Eliminar archivos de la base de datos
     for archivo in archivos:
         id_archivo = archivo.id_archivo
-        nombre_archivo = archivo.nombre_archivo
-        ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
-        
-        if os.path.exists(ruta_archivo):
-            os.remove(ruta_archivo)
         
         cursor.execute('''
             DELETE FROM Archivos 
@@ -422,9 +395,13 @@ def vaciar_papelera(current_user):
     ''', (current_user['id_usuario'],))
     
     carpetas = cursor.fetchall()
-    
+
+    # Eliminar carpetas de la base de datos
     for carpeta in carpetas:
-        eliminar_carpeta(carpeta.id_carpeta)
+        cursor.execute('''
+            DELETE FROM Carpetas 
+            WHERE id_carpeta = ? 
+        ''', (carpeta.id_carpeta,))
 
     # Actualizar el espacio ocupado del usuario
     cursor.execute('''
