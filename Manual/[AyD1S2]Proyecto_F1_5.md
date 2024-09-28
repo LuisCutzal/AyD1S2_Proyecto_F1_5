@@ -196,33 +196,6 @@ Con este modelo de ramificación, puedo desarrollar características de manera s
 
 - El sistema debe ser capaz de gestionar aumentos o reducciones de espacio de almacenamiento de manera dinámica y controlada, evitando inconsistencias cuando el espacio ocupado supere el límite reducido.
 
-## Tecnologias a Utilizar
-
-### Tecnologías frontend
-
-Para construir la interfaz de usuario y la experiencia del usuario.
-
-**HTML/CSS:** Para estructurar y dar estilo a páginas web.
-**JavaScript:** Para agregar interactividad y efectos dinámicos a páginas web.
-**React:** Para construir componentes de IU reutilizables y administrar cambios de estado.
-**Bootstrap o Material-UI:** Para utilizar componentes de IU preconstruidos y diseños.
-
-### Tecnologías backend
-
-Para construir la lógica del lado del servidor, la integración de bases de datos y la conectividad de API.
-
-**Python:**  Django y Flask.
-
-### Otras tecnologías
-
-**Plataformas en la nube:** AWS, Microsoft Azure, Google Cloud Platform, o IBM Cloud para implementar y administrar aplicaciones
-
-### Tecnologías de bases de datos
-
-Para almacenar y administrar datos.
-
-**Bases de datos relacionales:** Microsoft SQL Server para datos estructurados.
-
 ## Historia de Usuarios
 
 ## Administrador
@@ -443,6 +416,33 @@ Como Cliente, quiero crear copias de seguridad cifradas de mis archivos, para as
 **Criterio de aceptación:**
 - El sistema debe permitir la creación de copias de seguridad cifradas que sean recuperables únicamente por el cliente.
 
+## Tecnologias a Utilizar
+
+### Tecnologías frontend
+
+Para construir la interfaz de usuario y la experiencia del usuario.
+
+**HTML/CSS:** Para estructurar y dar estilo a páginas web.
+**JavaScript:** Para agregar interactividad y efectos dinámicos a páginas web.
+**React:** Para construir componentes de IU reutilizables y administrar cambios de estado.
+**Bootstrap o Material-UI:** Para utilizar componentes de IU preconstruidos y diseños.
+
+### Tecnologías backend
+
+Para construir la lógica del lado del servidor, la integración de bases de datos y la conectividad de API.
+
+**Python:**  Django y Flask.
+
+### Otras tecnologías
+
+**Plataformas en la nube:** AWS, Microsoft Azure, Google Cloud Platform, o IBM Cloud para implementar y administrar aplicaciones
+
+### Tecnologías de bases de datos
+
+Para almacenar y administrar datos.
+
+**Bases de datos relacionales:** Microsoft SQL Server para datos estructurados.
+
 
 # Diagrama de actividades
 
@@ -526,6 +526,13 @@ Como Cliente, quiero crear copias de seguridad cifradas de mis archivos, para as
 # Diagrama de despliegue
 ![](img/diagramaDespliegue/DiagramaDespliegue.png)
 
+
+
+# Diagrama Entidad-Relacion
+
+![Entidad Relacion](/Manual/img/diagramaEntidadRelacion/ER.png)
+
+
 # Descripción de la Seguridad de la Aplicación
 
 ## 1 Inicio de sesión
@@ -544,8 +551,3 @@ Cada ves que un cliente se registre en la aplicación como ultimo paso se enviar
 ## 3 Recuperacion de contraseñas
 
 En caso de olvido de la contraseña, se debe pasar por un proceso de recuperación seguro que incluye verificación por correo electrónico
-
-
-# Diagrama Entidad-Relacion
-
-![Entidad Relacion](/Manual/img/diagramaEntidadRelacion/ER.png)
