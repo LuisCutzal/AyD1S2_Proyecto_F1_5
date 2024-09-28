@@ -14,6 +14,215 @@ La estructura de trabajo en ciclos cortos, facilita la entrega constante de part
 
 Además, Scrum fomenta una comunicación abierta y una mejora continua dentro del equipo. Las reuniones diarias, son clave para asegurar que todos estén alineados y para identificar problemas rápidamente. Este enfoque colaborativo ayuda a minimizar los riesgos y a mantener el proyecto en el buen camino.
 
+## Modelo de branching
+
+**Git Flow**
+
+El flujo de Git se utilizo para el desarrollo de características y lanzamientos. La rama master contiene el código listo para producción, mientras que la rama develop es donde se desarrollan nuevas características. Cuando una característica está completa, se fusiona con develop, y cuando está lista para producción, se fusiona con master. Para cada lanzamiento, se crea una rama de lanzamiento desde develop, se realizan correcciones de errores y se fusiona con master cuando el lanzamiento está completo.
+
+**Feature Branching**
+
+Se utilizaron ramas separadas para cada nueva característica, que se fusionan con develop cuando están completas. Esto permite que multiple características se desarrollen simultáneamente sin afectar el código en producción.
+
+**Release Branching**
+
+Se utilizaron ramas separadas para cada lanzamiento, que se crean desde develop cuando un lanzamiento está listo. Se realizan correcciones de errores en esta rama y se fusiona con master cuando el lanzamiento está completo.
+
+**Hotfix**
+
+Se ha implementado un proceso de Hotfix para solucionar problemas críticos en producción de manera urgente. Cuando surge un problema crítico, se crea una rama de Hotfix desde master, se soluciona el problema, se fusiona la rama de Hotfix con master y develop para asegurarse de que la solución se incluya en la próxima versión.
+
+Con este modelo de ramificación, puedo desarrollar características de manera simultánea, lanzar nuevas versiones de manera rápida y flexible, y solucionar problemas críticos en producción de manera urgente.
+
+
+## Requerimientos Funcionales
+### 1. Gestión de usuarios
+#### Admin
+
+- Crear usuarios de tipo Empleado y Cliente.
+
+- Modificar configuraciones de cuentas (aumentar o reducir espacio de almacenamiento).
+
+- Eliminar cuentas de usuarios, notificando previamente por correo electrónico, y eliminar permanentemente la información asociada a la cuenta.
+
+- Crear nuevas cuentas para usuarios que ya eliminaron previamente su cuenta, iniciando con una cuenta vacía.
+
+- No tener acceso a los archivos personales de los usuarios.
+
+#### Empleado
+
+- Gestionar usuarios finales y modificar configuraciones de sus cuentas.
+
+- No tener acceso a los archivos personales de los usuarios.
+
+#### Cliente
+- Registrar una cuenta en el sistema proporcionando la siguiente información:
+    - Nombre y apellido
+    - Nombre de usuario
+    - Contraseña (encriptada)
+    - Email (validar que no esté repetido)
+    - Celular y extensión
+    - País de residencia
+    - Nacionalidad
+    - Elegir un paquete de almacenamiento:
+    - Premium (150 GB)
+    - Standard (50 GB)
+    - Basic (15 GB)
+    - Iniciar sesión con su correo electrónico o nombre de usuario.
+    - Restablecer la contraseña por medio de correo electrónico si se olvida.
+    - Confirmar la creación de la cuenta a través de un correo de validación.
+    - Solicitar expansión o reducción de espacio de almacenamiento.
+    - Solicitar eliminación de su cuenta (requiere confirmación por correo).
+
+### 2. Gestión de archivos y carpetas
+
+- Crear, modificar y eliminar carpetas.
+
+- Subir, descargar, modificar y eliminar archivos.
+
+- Al eliminar archivos, estos se envían a la papelera.
+
+- Vaciar la papelera (acción irreversible).
+
+- Previsualizar archivos como PDF, imágenes, música y videos.
+
+- Compartir carpetas y archivos con otros usuarios (por correo o nombre de usuario).
+
+- Crear una carpeta "Compartidos conmigo" para almacenar archivos compartidos.
+
+- Mostrar quién es el propietario del archivo o carpeta compartida.
+
+- Solo el propietario puede modificar o eliminar el contenido compartido.
+
+- Dejar de compartir archivos o carpetas.
+
+- Etiquetar carpetas compartidas para identificarlas.
+
+- Agregar etiquetas personalizadas a las carpetas.
+
+- Conocer detalles de cada archivo o carpeta:
+
+- Fecha de creación y modificación.
+
+- Espacio ocupado.
+
+- Ver una lista de archivos y carpetas recientes con los que se ha interactuado.
+
+- Marcar archivos y carpetas como favoritos.
+
+- Crear un Backup cifrado de los archivos.
+
+### 3. Gestión de espacio de almacenamiento
+
+- Al registrar un nuevo usuario, asignar uno de los paquetes de almacenamiento disponibles.
+
+- Los nuevos usuarios tendrán acceso gratuito a los paquetes de almacenamiento durante 3 meses, luego deberán recibir una alerta para realizar el pago o bloquear el acceso.
+
+- Los administradores pueden aumentar o reducir el espacio de almacenamiento asignado a las cuentas, con la restricción de no reducir el espacio si supera el espacio ocupado.
+
+### 4. Autenticación y registro
+
+- Los usuarios deben poder iniciar sesión o registrarse desde la página de inicio.
+
+- Los administradores y empleados no deben tener acceso a los archivos de los clientes.
+
+- La funcionalidad de "olvidé mi contraseña" debe permitir a los usuarios restablecer su contraseña a través de un correo electrónico.
+
+### 5. Interfaz de usuario
+
+- La interfaz debe mostrar un explorador de archivos donde el usuario pueda ver y gestionar sus archivos.
+
+- Incluir una gráfica que muestre el espacio ocupado en la cuenta del usuario.
+
+### 6. Notificaciones y correos electrónicos
+
+- Enviar correos electrónicos para confirmar la creación de cuentas.
+
+- Notificar por correo electrónico a los usuarios cuando su cuenta esté en proceso de ser eliminada.
+
+- Enviar correos electrónicos para el restablecimiento de contraseñas.
+
+## Requerimientos no Funcionales
+
+### 1 Seguridad
+
+- Los datos de los usuarios deben estar protegidos mediante encriptación, especialmente las contraseñas.
+
+- Debe garantizarse la seguridad, integridad y accesibilidad de los archivos almacenados en la nube.
+
+- El acceso a los archivos de los clientes debe estar restringido para roles administrativos (Admin y Empleado).
+
+### 2 Escalabilidad
+- El sistema debe ser capaz de escalar horizontalmente para manejar un aumento en el número de usuarios y la cantidad de datos almacenados.
+
+- El sistema debe ser capaz de gestionar el almacenamiento de clientes a nivel global.
+
+- El sistema debe ser capaz de manejar múltiples solicitudes simultáneas de los clientes.
+
+### 3 Disponibilidad
+
+- El sistema debe estar disponible las 24 horas del día, los 7 días de la semana, con un tiempo de inactividad mínimo.
+
+- Los usuarios deben poder acceder a sus archivos desde cualquier parte del mundo, lo que implica una alta disponibilidad del sistema.
+
+### 4 Rendimento
+
+- El sistema debe ser capaz de gestionar operaciones de subida, descarga, modificación y eliminación de archivos de manera eficiente.
+
+### 5 Usabilidad
+
+- La interfaz de usuario debe ser intuitiva y fácil de usar, para que los clientes puedan navegar y gestionar sus archivos sin dificultad.
+
+- El sistema debe incluir gráficos y secciones claras para la navegación por archivos y visualización del espacio ocupado.
+
+### 6 Compatibilidad y Portabilidad
+
+- El sistema debe ser compatible con múltiples dispositivos y navegadores, para garantizar una experiencia de usuario consistente.
+
+
+### 7 Confiabilidad
+
+- El sistema debe ser confiable y seguro, con copias de seguridad regulares y redundancia de datos para evitar la pérdida de información.
+
+- Las acciones destructivas, como eliminar cuentas o vaciar la papelera, deben ser irreversibles y confirmadas por correo electrónico.
+
+### 8 Mantenibilidad
+
+- El código del sistema debe ser modular y bien documentado, para facilitar futuras actualizaciones y correcciones.
+
+- El sistema debe estar diseñado de manera que permita fácil mantenimiento, tanto para la gestión de usuarios como para la administración del almacenamiento y paquetes.
+
+### 9 Regulación de espacio
+
+- El sistema debe ser capaz de gestionar aumentos o reducciones de espacio de almacenamiento de manera dinámica y controlada, evitando inconsistencias cuando el espacio ocupado supere el límite reducido.
+
+## Tecnologias a Utilizar
+
+### Tecnologías frontend
+
+Para construir la interfaz de usuario y la experiencia del usuario.
+
+**HTML/CSS:** Para estructurar y dar estilo a páginas web.
+**JavaScript:** Para agregar interactividad y efectos dinámicos a páginas web.
+**React:** Para construir componentes de IU reutilizables y administrar cambios de estado.
+**Bootstrap o Material-UI:** Para utilizar componentes de IU preconstruidos y diseños.
+
+### Tecnologías backend
+
+Para construir la lógica del lado del servidor, la integración de bases de datos y la conectividad de API.
+
+**Python:**  Django y Flask.
+
+### Otras tecnologías
+
+**Plataformas en la nube:** AWS, Microsoft Azure, Google Cloud Platform, o IBM Cloud para implementar y administrar aplicaciones
+
+### Tecnologías de bases de datos
+
+Para almacenar y administrar datos.
+
+**Bases de datos relacionales:** Microsoft SQL Server para datos estructurados.
+
 ## Historia de Usuarios
 
 ## Administrador
@@ -233,167 +442,6 @@ Como Cliente, quiero crear copias de seguridad cifradas de mis archivos, para as
 
 **Criterio de aceptación:**
 - El sistema debe permitir la creación de copias de seguridad cifradas que sean recuperables únicamente por el cliente.
-
-## Requerimientos Funcionales
-### 1. Gestión de usuarios
-#### Admin
-
-- Crear usuarios de tipo Empleado y Cliente.
-
-- Modificar configuraciones de cuentas (aumentar o reducir espacio de almacenamiento).
-
-- Eliminar cuentas de usuarios, notificando previamente por correo electrónico, y eliminar permanentemente la información asociada a la cuenta.
-
-- Crear nuevas cuentas para usuarios que ya eliminaron previamente su cuenta, iniciando con una cuenta vacía.
-
-- No tener acceso a los archivos personales de los usuarios.
-
-#### Empleado
-
-- Gestionar usuarios finales y modificar configuraciones de sus cuentas.
-
-- No tener acceso a los archivos personales de los usuarios.
-
-#### Cliente
-- Registrar una cuenta en el sistema proporcionando la siguiente información:
-    - Nombre y apellido
-    - Nombre de usuario
-    - Contraseña (encriptada)
-    - Email (validar que no esté repetido)
-    - Celular y extensión
-    - País de residencia
-    - Nacionalidad
-    - Elegir un paquete de almacenamiento:
-    - Premium (150 GB)
-    - Standard (50 GB)
-    - Basic (15 GB)
-    - Iniciar sesión con su correo electrónico o nombre de usuario.
-    - Restablecer la contraseña por medio de correo electrónico si se olvida.
-    - Confirmar la creación de la cuenta a través de un correo de validación.
-    - Solicitar expansión o reducción de espacio de almacenamiento.
-    - Solicitar eliminación de su cuenta (requiere confirmación por correo).
-
-### 2. Gestión de archivos y carpetas
-
-- Crear, modificar y eliminar carpetas.
-
-- Subir, descargar, modificar y eliminar archivos.
-
-- Al eliminar archivos, estos se envían a la papelera.
-
-- Vaciar la papelera (acción irreversible).
-
-- Previsualizar archivos como PDF, imágenes, música y videos.
-
-- Compartir carpetas y archivos con otros usuarios (por correo o nombre de usuario).
-
-- Crear una carpeta "Compartidos conmigo" para almacenar archivos compartidos.
-
-- Mostrar quién es el propietario del archivo o carpeta compartida.
-
-- Solo el propietario puede modificar o eliminar el contenido compartido.
-
-- Dejar de compartir archivos o carpetas.
-
-- Etiquetar carpetas compartidas para identificarlas.
-
-- Agregar etiquetas personalizadas a las carpetas.
-
-- Conocer detalles de cada archivo o carpeta:
-
-- Fecha de creación y modificación.
-
-- Espacio ocupado.
-
-- Ver una lista de archivos y carpetas recientes con los que se ha interactuado.
-
-- Marcar archivos y carpetas como favoritos.
-
-- Crear un Backup cifrado de los archivos.
-
-### 3. Gestión de espacio de almacenamiento
-
-- Al registrar un nuevo usuario, asignar uno de los paquetes de almacenamiento disponibles.
-
-- Los nuevos usuarios tendrán acceso gratuito a los paquetes de almacenamiento durante 3 meses, luego deberán recibir una alerta para realizar el pago o bloquear el acceso.
-
-- Los administradores pueden aumentar o reducir el espacio de almacenamiento asignado a las cuentas, con la restricción de no reducir el espacio si supera el espacio ocupado.
-
-### 4. Autenticación y registro
-
-- Los usuarios deben poder iniciar sesión o registrarse desde la página de inicio.
-
-- Los administradores y empleados no deben tener acceso a los archivos de los clientes.
-
-- La funcionalidad de "olvidé mi contraseña" debe permitir a los usuarios restablecer su contraseña a través de un correo electrónico.
-
-### 5. Interfaz de usuario
-
-- La interfaz debe mostrar un explorador de archivos donde el usuario pueda ver y gestionar sus archivos.
-
-- Incluir una gráfica que muestre el espacio ocupado en la cuenta del usuario.
-
-### 6. Notificaciones y correos electrónicos
-
-- Enviar correos electrónicos para confirmar la creación de cuentas.
-
-- Notificar por correo electrónico a los usuarios cuando su cuenta esté en proceso de ser eliminada.
-
-- Enviar correos electrónicos para el restablecimiento de contraseñas.
-
-## Requerimientos no Funcionales
-
-### 1 Seguridad
-
-- Los datos de los usuarios deben estar protegidos mediante encriptación, especialmente las contraseñas.
-
-- Debe garantizarse la seguridad, integridad y accesibilidad de los archivos almacenados en la nube.
-
-- El acceso a los archivos de los clientes debe estar restringido para roles administrativos (Admin y Empleado).
-
-### 2 Escalabilidad
-- El sistema debe ser capaz de escalar horizontalmente para manejar un aumento en el número de usuarios y la cantidad de datos almacenados.
-
-- El sistema debe ser capaz de gestionar el almacenamiento de clientes a nivel global.
-
-- El sistema debe ser capaz de manejar múltiples solicitudes simultáneas de los clientes.
-
-### 3 Disponibilidad
-
-- El sistema debe estar disponible las 24 horas del día, los 7 días de la semana, con un tiempo de inactividad mínimo.
-
-- Los usuarios deben poder acceder a sus archivos desde cualquier parte del mundo, lo que implica una alta disponibilidad del sistema.
-
-### 4 Rendimento
-
-- El sistema debe ser capaz de gestionar operaciones de subida, descarga, modificación y eliminación de archivos de manera eficiente.
-
-### 5 Usabilidad
-
-- La interfaz de usuario debe ser intuitiva y fácil de usar, para que los clientes puedan navegar y gestionar sus archivos sin dificultad.
-
-- El sistema debe incluir gráficos y secciones claras para la navegación por archivos y visualización del espacio ocupado.
-
-### 6 Compatibilidad y Portabilidad
-
-- El sistema debe ser compatible con múltiples dispositivos y navegadores, para garantizar una experiencia de usuario consistente.
-
-
-### 7 Confiabilidad
-
-- El sistema debe ser confiable y seguro, con copias de seguridad regulares y redundancia de datos para evitar la pérdida de información.
-
-- Las acciones destructivas, como eliminar cuentas o vaciar la papelera, deben ser irreversibles y confirmadas por correo electrónico.
-
-### 8 Mantenibilidad
-
-- El código del sistema debe ser modular y bien documentado, para facilitar futuras actualizaciones y correcciones.
-
-- El sistema debe estar diseñado de manera que permita fácil mantenimiento, tanto para la gestión de usuarios como para la administración del almacenamiento y paquetes.
-
-### 9 Regulación de espacio
-
-- El sistema debe ser capaz de gestionar aumentos o reducciones de espacio de almacenamiento de manera dinámica y controlada, evitando inconsistencias cuando el espacio ocupado supere el límite reducido.
 
 
 # Diagrama de actividades
