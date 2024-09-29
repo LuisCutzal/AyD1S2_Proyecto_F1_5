@@ -590,3 +590,9 @@ Cada ves que un cliente se registre en la aplicación como ultimo paso se enviar
 ## 3 Recuperacion de contraseñas
 
 En caso de olvido de la contraseña, se debe pasar por un proceso de recuperación seguro que incluye verificación por correo electrónico
+
+# Mockups
+
+![Login](/Manual/img/mockupprincipales/MK_PantallaPrincipal_1.jpg)
+![SignUp](/Manual/img/mockupprincipales/MK_PantallaPrincipal_3.jpg)
+![Dashboard](/Manual/img/mockupprincipales/MK_PantallaPrincipal_2.jpg)
