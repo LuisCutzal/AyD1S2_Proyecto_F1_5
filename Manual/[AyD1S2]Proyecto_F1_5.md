@@ -437,6 +437,12 @@ Para construir la lógica del lado del servidor, la integración de bases de dat
 
 **Plataformas en la nube:** AWS, Microsoft Azure, Google Cloud Platform, o IBM Cloud para implementar y administrar aplicaciones
 
+**RDS (Relational Database Service):** Es un servicio administrado que facilita la configuración, operación y escalado de bases de datos relacionales en la nube. AWS RDS soporta motores de bases de datos como MySQL, PostgreSQL, Oracle, y SQL Server, y gestiona tareas como las actualizaciones, copias de seguridad y la replicación.
+
+**EC2 (Elastic Compute Cloud):** Es un servicio que proporciona capacidad de cómputo escalable en la nube. Permite ejecutar máquinas virtuales (instancias EC2) con diferentes configuraciones de CPU, memoria y almacenamiento, que puedes usar para desplegar aplicaciones o servidores.
+
+**S3 (Simple Storage Service):** Es un servicio de almacenamiento de objetos que permite guardar y recuperar grandes cantidades de datos en la nube. Es ideal para almacenar archivos multimedia, copias de seguridad, datos estáticos y más, con alta disponibilidad y durabilidad.
+
 ### Tecnologías de bases de datos
 
 Para almacenar y administrar datos.
