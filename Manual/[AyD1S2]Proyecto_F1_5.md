@@ -596,6 +596,8 @@ En caso de olvido de la contrase√±a, se debe pasar por un proceso de recuperaci√
 ![Login](/img/mockupprincipales/MK_PantallaPrincipal_1.jpg)
 ![SignUp](/img/mockupprincipales/MK_PantallaPrincipal_3.jpg)
 ![Dashboard](/img/mockupprincipales/MK_PantallaPrincipal_2.jpg)
+![PanelAdministracion](/img/mockupprincipales/MK_PantallaPrincipal_4.jpg)
+![AumentarEspacio](/img/mockupprincipales/MK_PantallaPrincipal_5.jpg)
 
 ## Pipelines para los servicios
 ```
