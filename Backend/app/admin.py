@@ -206,20 +206,20 @@ def remove_user_data(current_user, id_usuario):
         user_data = cursor.fetchone()
         if not user_data:
             return jsonify({"error": "Usuario no encontrado"}), 404
+        cursor.execute('DELETE FROM Favoritos WHERE id_usuario = ?', (id_usuario,))
+        cursor.execute('DELETE FROM Backups_Cifrados WHERE id_usuario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Archivos WHERE id_usuario_propietario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Carpetas WHERE id_usuario_propietario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Etiquetas WHERE id_usuario = ?', (id_usuario,))
-        cursor.execute('DELETE FROM Favoritos WHERE id_usuario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Actividades_Recientes WHERE id_usuario = ?', (id_usuario,))
-        cursor.execute('DELETE FROM Backups_Cifrados WHERE id_usuario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Compartidos WHERE id_usuario_propietario = ? OR id_usuario_destinatario = ?', (id_usuario, id_usuario))
-
         cursor.execute('UPDATE Usuarios SET espacio_ocupado = 0 WHERE id_usuario = ?', (id_usuario,))
         conn.commit()
         return jsonify({"message": "Toda la información del usuario ha sido eliminada correctamente."}), 200
     except Exception as e:
         conn.rollback()
-        return 500
+        print(f"Error: {e}")
+        return jsonify({"error": "Error interno del servidor"}), 500
 
     finally:
         # Cerrar la conexión
