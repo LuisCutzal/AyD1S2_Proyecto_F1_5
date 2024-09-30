@@ -412,6 +412,64 @@ def vaciar_papelera(current_user):
     conn.commit()
     return jsonify({'message': 'Papelera vaciada correctamente.'}), 200
 
+# ver papelera
+
+@cliente_bp.route('/papelera', methods=['GET'])
+@token_required
+@cliente_required
+def obtener_archivos_y_carpetas_papelera(current_user):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Obtener los archivos en la papelera del usuario
+    cursor.execute('''
+        SELECT id_archivo, nombre_archivo, tamano_mb, url_archivo, id_carpeta
+        FROM Archivos
+        WHERE id_usuario_propietario = ? AND en_papelera = 1
+    ''', (current_user['id_usuario'],))
+
+    archivos = cursor.fetchall()
+
+    # Obtener las carpetas en la papelera del usuario
+    cursor.execute('''
+        SELECT id_carpeta, nombre_carpeta, id_carpeta_padre
+        FROM Carpetas
+        WHERE id_usuario_propietario = ? AND en_papelera = 1
+    ''', (current_user['id_usuario'],))
+
+    carpetas = cursor.fetchall()
+
+    # Preparar la lista de archivos
+    lista_archivos = []
+    print(archivos)
+    for archivo in archivos:
+        lista_archivos.append({
+            'id_archivo': archivo.id_archivo,
+            'nombre': archivo.nombre_archivo,
+            'tipo': archivo.nombre_archivo.split('.')[1],
+            'carpeta_id':archivo.id_carpeta,
+            'tamaño': archivo.tamano_mb,
+            'url': archivo.url_archivo
+        })
+
+    # Preparar la lista de carpetas
+    lista_carpetas = []
+    for carpeta in carpetas:
+        lista_carpetas.append({
+            'id_carpeta': carpeta.id_carpeta,
+            'nombre': carpeta.nombre_carpeta,
+            'padre': carpeta.id_carpeta_padre
+        })
+
+    # Si no hay ni archivos ni carpetas en la papelera
+    if not archivos and not carpetas:
+        return jsonify({'message': 'No hay archivos ni carpetas en la papelera.'}), 200
+
+    # Devolver los archivos y carpetas en formato JSON
+    return jsonify({
+        'archivos_en_papelera': lista_archivos,
+        'carpetas_en_papelera': lista_carpetas
+    }), 200
 
 
 # modificar datos del usuario
