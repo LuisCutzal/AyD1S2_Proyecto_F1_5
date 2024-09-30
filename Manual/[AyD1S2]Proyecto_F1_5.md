@@ -425,7 +425,7 @@ Para construir la interfaz de usuario y la experiencia del usuario.
 **HTML/CSS:** Para estructurar y dar estilo a páginas web.
 **JavaScript:** Para agregar interactividad y efectos dinámicos a páginas web.
 **React:** Para construir componentes de IU reutilizables y administrar cambios de estado.
-**Bootstrap o Material-UI:** Para utilizar componentes de IU preconstruidos y diseños.
+**Vite o Material-UI:** Para utilizar componentes de IU preconstruidos y diseños.
 
 ### Tecnologías backend
 
@@ -569,7 +569,7 @@ Sin embargo, también hay desventajas, como:
 
 # Diagrama Entidad-Relacion
 
-![Entidad Relacion](/Manual/img/diagramaEntidadRelacion/ER.png)
+![Entidad Relacion](/img/diagramaEntidadRelacion/ER.png)
 
 
 # Descripción de la Seguridad de la Aplicación
@@ -593,6 +593,601 @@ En caso de olvido de la contraseña, se debe pasar por un proceso de recuperaci�
 
 # Mockups
 
-![Login](/Manual/img/mockupprincipales/MK_PantallaPrincipal_1.jpg)
-![SignUp](/Manual/img/mockupprincipales/MK_PantallaPrincipal_3.jpg)
-![Dashboard](/Manual/img/mockupprincipales/MK_PantallaPrincipal_2.jpg)
+![Login](/img/mockupprincipales/MK_PantallaPrincipal_1.jpg)
+![SignUp](/img/mockupprincipales/MK_PantallaPrincipal_3.jpg)
+![Dashboard](/img/mockupprincipales/MK_PantallaPrincipal_2.jpg)
+
+## Pipelines para los servicios
+```
+Nombre de operación: 
+register_user
+
+URL: 
+http://localhost:5000/auth/register
+
+Método http: 
+POST
+
+Cabecera Petición:
+Content-Type: application/json
+
+PAYLOAD:
+
+{
+  "nombre": "Maria",
+  "apellido": "Lopez",
+  "nombre_usuario": "mlopez",
+  "email": "maria.lopez@example.com",
+  "celular": "98765432",
+  "nacionalidad": "Mexico",
+  "pais_residencia": "Mexico",
+  "contrasena": "mypass456",
+  "espacio_asignado": 15
+}
+
+Cabecera respuesta:
+
+http Código HTTP 201 { "message": "Usuario registrado correctamente" }
+
+Código HTTP 400 { "Error": "Error en la integridad de la base de datos" }
+
+Código HTTP 409 { "Error": "El nombre de usuario o correo ya existen" }
+```
+
+```
+Nombre de operación: 
+login_user
+
+URL: 
+http://localhost:5000/auth/login
+
+Método http: 
+POST
+
+Cabecera Petición:
+Content-Type: application/json
+
+PAYLOAD:
+
+{
+ "identificador": "maria.lopez@example.com",
+ "contrasena": "mypass456" 
+}
+
+Cabecera respuesta:
+
+http HTTP Respuesta 200 { "message": "Login successful", "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c3VhcmlvIjoxMSwiaWRfcm9sIjoxLCJub21icmVfdXN1YXJpbyI6Im5vb29vbyJ9.0inzZBQLd5dFF41vdZwsituroIBv7ITOR2a_XAJTBe8" }
+
+HTTP Respuesta 401 { "error": "Nombre de usuario/correo o contraseña son inválidos" }
+
+HTTP Respuesta 403 { "error": "Suscripción vencida. Por favor, realice el pago para continuar usando el servicio" }
+```
+
+```
+Nombre de operación: 
+register_user
+
+URL: 
+http://localhost:5000/admin/registers
+
+Método http: 
+POST
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+{
+    "nombre": "flor",
+    "apellido": "cutzal",
+    "nombre_usuario": "floc",
+    "email": "flo@gmail.com",
+    "celular": "98765432",
+    "nacionalidad": "Guatemala",
+    "pais_residencia": "Guatemala",
+    "contrasena": STRING,
+    "id_rol": INT,
+    "espacio_asignado": INT
+} 
+
+
+Cabecera respuesta:
+
+http Código HTTP 201 { "message": "Usuario registrado correctamente" }
+
+Código HTTP 400 { "Error": "Error en la integridad de la base de datos" }
+
+Código HTTP 409 { "Error": "El nombre de usuario o correo ya existen" }
+```
+
+```
+Nombre de operación: 
+get_users
+
+URL: 
+http://localhost:5000//admin/users
+
+Método http: 
+GET
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+NONE
+
+Cabecera respuesta:
+
+HTTP 200
+[
+  {
+    "espacio_asignado": "50.00",
+    "espacio_ocupado": "0.00",
+    "id_usuario": 1,
+    "nombre_usuario": "jperez"
+  },
+  {
+    "espacio_asignado": "15.00",
+    "espacio_ocupado": "0.00",
+    "id_usuario": 9,
+    "nombre_usuario": "asdf"
+  }
+]
+```
+
+```
+Nombre de operación: 
+update_user_space
+
+URL: 
+http://localhost:5000/admin/users/<int:id_usuario>/update_space
+
+Método http: 
+PUT
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+{ 
+    "espacio_asignado": INT 
+}
+
+Cabecera respuesta:
+
+http HTTP 200 { "message": "Espacio actualizado correctamente" }
+
+HTTP 400 { "error": "No se puede reducir el espacio porque el espacio ocupado es mayor que el nuevo espacio asignado" }
+
+HTTP 404 { "error": "Usuario no encontrado" }
+```
+
+```
+Nombre de operación: 
+get_inactive_users
+
+URL: 
+http://localhost:5000/admin/users/inactive
+
+Método http: 
+GET
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+NONE
+
+Cabecera respuesta:
+
+http HTTP 200 
+[ 
+    { 
+        "email": "juan.perez@example.com",
+        "fecha_ultimo_login": "Nunca",
+        "id_usuario": 1,
+        "nombre_usuario": "jperez" 
+    },
+    { 
+        "email": "aaaa.perez@example.com",
+        "fecha_ultimo_login": "2024-07-20 00:00:00",
+        "id_usuario": 9,
+        "nombre_usuario": "asdf" 
+    } 
+]
+
+HTTP 500 
+{ 
+    "error": "Error al obtener usuarios inactivos" 
+}
+```
+
+```
+Nombre de operación: 
+notify_user_removal
+
+URL: 
+http://localhost:5000/admin/users/<int:id_usuario>/notify_removal
+
+Método http: 
+POST
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+NONE
+
+Cabecera respuesta:
+
+http HTTP 200 
+{
+    "message": "Correo de aviso enviado correctamente"
+}
+
+http 404
+
+{ 
+    "error": "usuario no encontrado" 
+}
+```
+
+```
+Nombre de operación: 
+remove_user_data
+
+URL: 
+http://localhost:5000/admin/users/<int:id_usuario>/remove
+
+Método http: 
+DELETE
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+NONE
+
+Cabecera respuesta:
+
+http HTTP 200 
+{
+    "message": "Toda la información del usuario ha sido eliminada correctamente."
+}
+
+http 404
+
+{ 
+    "error": "Usuario no encontrado."
+}
+```
+
+```
+Nombre de operación: 
+cliente_route
+
+URL: 
+http://localhost:5000/cliente/dashboard
+
+Método http: 
+GET
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+NONE
+
+Cabecera respuesta:
+
+HTTP 200
+{
+  "archivos": [],
+  "carpetas": [
+    {
+      "id_carpeta": 1,
+      "nombre": "Nueva Carpeta",
+      "padre": null
+    }
+  ],
+  "espacio_libre": "15.00",
+  "espacio_total": "15.00",
+  "espacio_usado": "0.00"
+}
+```
+
+```
+Nombre de operación: 
+crear_carpeta
+
+URL: 
+http://localhost:5000/cliente/carpeta
+
+Método http: 
+POST
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+{
+  "nombre_carpeta": "Nueva Carpeta",
+  "id_carpeta_padre": 1
+}
+
+Cabecera respuesta:
+
+HTTP 200
+{
+  "message": "Carpeta creada correctamente"
+}
+
+HTTP 400
+{
+  "error": "La carpeta padre no existe."
+}
+
+```
+
+```
+Nombre de operación: 
+eliminar_carpeta
+
+URL: 
+http://localhost:5000/cliente/carpeta/<int:id_carpeta>
+
+Método http: 
+DELETE
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+NONE
+
+Cabecera respuesta:
+
+HTTP 200
+{
+  "message": "Carpeta eliminada correctamente."
+}
+
+HTTP 400
+{
+  "error": "La carpeta no existe."
+}
+
+HTTP 404
+{
+  "error": "La carpeta no existe."
+}
+
+```
+
+```
+Nombre de operación: 
+modificar_carpeta
+
+URL: 
+http://localhost:5000/cliente/carpeta/<int:id_carpeta>
+
+Método http: 
+PUT
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+{
+    "nombre_carpeta": "Nueva Carpeta"
+}
+
+Cabecera respuesta:
+
+HTTP 200
+{
+  "message": "Carpeta modificada correctamente"
+}
+
+HTTP 400
+{
+  "error": "La carpeta está en papelera o no existe y no puede ser modificada."
+}
+
+HTTP 404
+{
+  "error": "La carpeta no existe."
+}
+
+```
+
+```
+Nombre de operación: 
+subir_archivo
+
+URL: 
+http://localhost:5000/cliente/archivo/subir
+
+Método http: 
+POST
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+{
+  "archivo": "file.jpg",
+  "id_carpeta": "1"
+}
+
+ó
+
+{
+  "archivo": "file.jpg"
+}
+
+Cabecera respuesta:
+
+HTTP 201
+{
+  "message": "Archivo subido correctamente."
+}
+
+HTTP 400
+{
+  "error": "No se ha enviado ningún archivo."
+}
+
+HTTP 400
+{
+  "error": "Nombre archivo invalido."
+}
+
+HTTP 404
+{
+  "error": "La carpeta no existe o no pertenece al usuario."
+}
+
+```
+
+```
+Nombre de operación: 
+eliminar_archivo
+
+URL: 
+http://localhost:5000/cliente/archivo/eliminar/<int:id_archivo>
+
+Método http: 
+DELETE
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+NONE
+
+Cabecera respuesta:
+
+HTTP 200
+{
+  "message": "Archivo movido a la papelera."
+}
+
+HTTP 404
+{
+  "error": "Archivo no encontrado."
+}
+
+```
+
+```
+Nombre de operación: 
+modificar_archivo
+
+URL: 
+http://localhost:5000/cliente/archivo/modificar/<int:id_archivo>
+
+Método http: 
+PUT
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+{
+  "nombre_archivo": "nuevo_nombre.pdf"
+}
+
+Cabecera respuesta:
+
+HTTP 200
+{
+  "message": "Nombre del archivo modificado correctamente."
+}
+
+HTTP 404
+{
+  "error": "Archivo no encontrado."
+}
+
+```
+
+```
+Nombre de operación: 
+vaciar_papelera
+
+URL: 
+http://localhost:5000/cliente/papelera/vaciar
+
+Método http: 
+DELETE
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+NONE
+
+Cabecera respuesta:
+
+HTTP 200
+{
+  "message": "Papelera vaciada correctamente."
+}
+
+```
+
+```
+Nombre de operación: 
+modificar_perfil
+
+URL: 
+http://localhost:5000/cliente/perfil/modificar
+
+Método http: 
+PUT
+
+Cabecera Petición:
+Authorization: Bearer <token>
+
+PAYLOAD:
+
+{
+  "nombre": "Nuevo Nombre",
+  "email": "nuevo_correo@example.com",
+  "celular": 123456789
+}
+
+Cabecera respuesta:
+
+HTTP 200
+{
+  "message": "Perfil modificado correctamente."
+}
+
+HTTP 404
+{
+  "error": "El usuario no existe."
+}
+
+HTTP 500
+{
+  "error": "Error interno del servidor."
+}
+
+
+```
