@@ -1,13 +1,13 @@
 import RegisterForm from '../components/auth/RegisterForm'
-import Layout from '../layout/Layout'
 
 const Register: React.FC = () => {
   return (
-    <Layout>
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-500 to-blue-800">
+      <div className="absolute inset-0 bg-black opacity-50"></div> {/* Overlay */}
+      <div className="relative z-10">
         <RegisterForm />
       </div>
-    </Layout>
+    </div>
   )
 }
 

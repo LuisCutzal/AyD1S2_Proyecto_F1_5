@@ -26,7 +26,7 @@ def cliente_route(current_user):
             carpetas = cursor.fetchall()
 
             cursor.execute('''
-                SELECT id_archivo, nombre_archivo, id_carpeta, tamano_mb
+                SELECT id_archivo, nombre_archivo, id_carpeta, tamano_mb, url_archivo
                 FROM Archivos
                 WHERE id_usuario_propietario = ? AND en_papelera = 0
             ''', (current_user['id_usuario'],))
@@ -48,10 +48,9 @@ def cliente_route(current_user):
                 espacio_total = 0
                 espacio_usado = 0
                 espacio_libre = 0
-
             return jsonify({
                 'carpetas': [{'id_carpeta': c[0], 'nombre': c[1], 'padre': c[2]} for c in carpetas],
-                'archivos': [{'id_archivo': a[0], 'nombre': a[1], 'carpeta': a[2], 'tamano_mb': a[3]} for a in archivos],
+                'archivos': [{'id_archivo': a[0], 'nombre': a[1], 'tipo': a[1].split('.')[1], 'carpeta_id': a[2], 'tamaño': a[3], 'url':a[4]} for a in archivos],
                 'espacio_total': espacio_total,
                 'espacio_usado': espacio_usado,
                 'espacio_libre': espacio_libre
