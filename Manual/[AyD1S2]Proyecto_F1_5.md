@@ -569,7 +569,7 @@ Sin embargo, también hay desventajas, como:
 
 # Diagrama Entidad-Relacion
 
-![Entidad Relacion](/img/diagramaEntidadRelacion/ER.png)
+![Entidad Relacion](img/diagramaEntidadRelacion/ER.png)
 
 
 # Descripción de la Seguridad de la Aplicación
@@ -593,11 +593,11 @@ En caso de olvido de la contraseña, se debe pasar por un proceso de recuperaci�
 
 # Mockups
 
-![Login](/img/mockupprincipales/MK_PantallaPrincipal_1.jpg)
-![SignUp](/img/mockupprincipales/MK_PantallaPrincipal_3.jpg)
-![Dashboard](/img/mockupprincipales/MK_PantallaPrincipal_2.jpg)
-![PanelAdministracion](/img/mockupprincipales/MK_PantallaPrincipal_4.jpg)
-![AumentarEspacio](/img/mockupprincipales/MK_PantallaPrincipal_5.jpg)
+![Login](img/mockupprincipales/MK_PantallaPrincipal_1.jpg)
+![SignUp](img/mockupprincipales/MK_PantallaPrincipal_3.jpg)
+![Dashboard](img/mockupprincipales/MK_PantallaPrincipal_2.jpg)
+![PanelAdministracion](img/mockupprincipales/MK_PantallaPrincipal_4.jpg)
+![AumentarEspacio](img/mockupprincipales/MK_PantallaPrincipal_5.jpg)
 
 ## Pipelines para los servicios
 ```
