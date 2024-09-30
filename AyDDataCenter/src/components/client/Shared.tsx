@@ -2,7 +2,14 @@ import { useState, useEffect } from 'react'
 import { FaFolder, FaFileAlt } from 'react-icons/fa'
 
 const Shared: React.FC = () => {
-  const [sharedItems, setSharedItems] = useState<any[]>([])
+  interface SharedItem {
+    id: string;
+    name: string;
+    type: 'folder' | 'file';
+    owner: string;
+  }
+  
+  const [sharedItems, setSharedItems] = useState<SharedItem[]>([])
   const [loading, setLoading] = useState<boolean>(false)
 
   useEffect(() => {
