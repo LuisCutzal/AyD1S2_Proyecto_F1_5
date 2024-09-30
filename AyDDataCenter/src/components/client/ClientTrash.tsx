@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { emptyTrash } from '../../services/fileService'
 
 const ClientTrash: React.FC = () => {
   const [trashItems, setTrashItems] = useState<any[]>([])
@@ -30,7 +31,14 @@ const ClientTrash: React.FC = () => {
   }
 
   const handleEmptyTrash = async () => {
-    // Implementa la lógica para vaciar la papelera
+    try {
+      const response = await emptyTrash()
+      
+    } catch (error) {
+      
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

@@ -65,21 +65,21 @@ export const registerUser = async (userData: UserData) => {
  */
 export const loginUser = async (credentials: { identificador: string, contrasena: string }) => {
   try {
-    // const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(credentials),
-    // })
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    })
 
-    // const data = await response.json()
+    const data = await response.json()
 
-    // if (!response.ok) {
-    //   throw new Error(data.error || 'Error en el inicio de sesión.')
-    // }
+    if (!response.ok) {
+      throw new Error(data.error || 'Error en el inicio de sesión.')
+    }
     console.log(credentials)
-    const data = dataLogin
+    //const data = dataLogin
 
     const { token, message } = data
     // Almacenar el token en localStorage para futuras peticiones
