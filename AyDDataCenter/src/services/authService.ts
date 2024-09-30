@@ -114,25 +114,25 @@ interface UserData {
 
 export const getUserData = async () => {
   try {
-    // const token = localStorage.getItem('authToken')
+    const token = localStorage.getItem('authToken')
 
-    // if (!token) {
-    //   throw new Error('No hay token de autenticación.')
-    // }
+    if (!token) {
+      throw new Error('No hay token de autenticación.')
+    }
 
-    // const response = await fetch(`${API_BASE_URL}/auth/me`, {
-    //   method: 'GET',
-    //   headers: {
-    //     Authorization: `Bearer ${token}`,
-    //   },
-    // })
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-    // if (!response.ok) {
-    //   throw new Error('Error al obtener datos del usuario.')
-    // }
+    if (!response.ok) {
+      throw new Error('Error al obtener datos del usuario.')
+    }
 
-    // const data = await response.json()
-    const data = dataUser
+    const data = await response.json()
+    //const data = dataUser
     
     if (data.id_rol === 1) {
       data.role = 'Administrador'

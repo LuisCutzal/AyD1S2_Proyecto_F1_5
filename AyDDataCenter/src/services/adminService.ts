@@ -57,22 +57,22 @@ export const getUsers = async (): Promise<User[]> => {
   const token = localStorage.getItem('authToken')
 
   try {
-    // const response = await fetch(`${API_BASE_URL}/admin/users`, {
-    //   method: 'GET',
-    //   headers: {
-    //     Authorization: `Bearer ${token}`,
-    //   },
-    // })
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-    // if (response.status === 200) {
-    //   const data = await response.json()
-    //   return data
-    // } else {
-    //   const errorData = await response.json()
-    //   throw new Error(errorData.error || 'Error al obtener usuarios.')
-    // }
-    const data = adminUsers
-    return data
+    if (response.status === 200) {
+      const data = await response.json()
+      return data
+    } else {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al obtener usuarios.')
+    }
+    //const data = adminUsers
+    //return data
   } catch (error) {
     console.error('Error al obtener usuarios:', error)
     throw error
@@ -91,22 +91,22 @@ export const getInactiveUsers = async (): Promise<InactiveUser[]> => {
   const token = localStorage.getItem('authToken')
 
   try {
-    // const response = await fetch(`${API_BASE_URL}/admin/users/inactive`, {
-    //   method: 'GET',
-    //   headers: {
-    //     Authorization: `Bearer ${token}`,
-    //   },
-    // })
+    const response = await fetch(`${API_BASE_URL}/admin/users/inactive`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-    // if (response.status === 200) {
-    //   const data = await response.json()
-    //   return data
-    // } else {
-    //   const errorData = await response.json()
-    //   throw new Error(errorData.error || 'Error al obtener usuarios inactivos.')
-    // }
-    const data = dataUserInactive
-    return data
+    if (response.status === 200) {
+      const data = await response.json()
+      return data
+    } else {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al obtener usuarios inactivos.')
+    }
+    //const data = dataUserInactive
+    //return data
   } catch (error) {
     console.error('Error al obtener usuarios inactivos:', error)
     throw error
