@@ -22,6 +22,7 @@ import Trash from '../pages/client/Trash'
 import Settings from '../pages/client/Settings'
 import Profile from '../pages/client/Profile'
 import Backup from '../pages/client/Backup'
+import ClientDashboard from '../components/client/ClientDashboard'
 
 const AppRouter: React.FC = () => {
   return (
@@ -49,7 +50,7 @@ const AppRouter: React.FC = () => {
       {/* Rutas Protegidas para Empleados y Clientes */}
       <Route path='client/' element={<PrivateRoute roles={[2, 3]} children={<ClientLayout />} />}>
         <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path='dashboard' element={<Unauthorized />}/>
+        <Route path='dashboard' element={< ClientDashboard />}/>
         <Route path='files' element={<Files />} />
         <Route path='shared' element={<SharedWithMe />}/>
         <Route path='recent' element={<Recent />}/>
