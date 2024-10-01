@@ -108,7 +108,7 @@ const ClientDashboard = () => {
               <strong>Espacio Total:</strong> {clientDashboardData.espacio_total} GB
             </li>
             <li>
-              <strong>Espacio Usado:</strong> {clientDashboardData.espacio_usado} GB
+              <strong>Espacio Usado:</strong> {clientDashboardData.espacio_usado/1024} GB
             </li>
             <li>
               <strong>Espacio Libre:</strong> {clientDashboardData.espacio_libre} GB

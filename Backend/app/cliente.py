@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request, send_file
 from app.connection import get_db_connection
 from app.decorators import token_required, cliente_required
 import os
+import bcrypt
 from werkzeug.utils import secure_filename
 from app.cargaBuket import uploadFileBucket
 from datetime import datetime
@@ -316,7 +317,7 @@ def eliminar_archivo(current_user, id_archivo):
 def modificar_archivo(current_user, id_archivo):
     datos = request.json
     nuevo_nombre = datos.get('nombre_archivo')
-    
+    print(nuevo_nombre)
     if not nuevo_nombre:
         return jsonify({'error': 'El nuevo nombre del archivo es requerido.'}), 400
 
@@ -331,7 +332,6 @@ def modificar_archivo(current_user, id_archivo):
     ''', (id_archivo, current_user['id_usuario']))
     
     archivo = cursor.fetchone()
-    
     if archivo is None:
         return jsonify({'error': 'Archivo no encontrado.'}), 404
 
@@ -489,7 +489,6 @@ def modificar_perfil(current_user):
     nacionalidad = datos.get('nacionalidad')
     pais_residencia = datos.get('pais_residencia')
     contrasena = datos.get('contrasena')
-
     conn = None
     cursor = None
 
@@ -513,7 +512,8 @@ def modificar_perfil(current_user):
         if pais_residencia:
             cursor.execute('''UPDATE Usuarios SET pais_residencia = ? WHERE id_usuario = ?''', (pais_residencia, current_user['id_usuario']))
         if contrasena:
-            cursor.execute('''UPDATE Usuarios SET contrasena = ? WHERE id_usuario = ?''', (contrasena, current_user['id_usuario']))
+            contrasena = bcrypt.hashpw(contrasena.encode('utf-8'), bcrypt.gensalt())
+            cursor.execute('''UPDATE Usuarios SET contrasena = ? WHERE id_usuario = ?''', (contrasena.decode('utf-8'), current_user['id_usuario']))
 
         conn.commit()
 
@@ -538,18 +538,19 @@ def solicitar_espacio(current_user):
     datos = request.json
     tipo_solicitud = datos.get('tipo_solicitud')  # 'expandir' o 'reducir'
     cantidad = datos.get('cantidad')
-
+    print(datos)
     if tipo_solicitud not in ['expandir', 'reducir']:
         return jsonify({'error': 'Tipo de solicitud inválido.'}), 400
-
+    
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Insertar la solicitud en la base de datos
-    cursor.execute('''
-        INSERT INTO SolicitudesEspacio (id_usuario, tipo_solicitud, cantidad)
-        VALUES (?, ?, ?)
-    ''', (current_user['id_usuario'], tipo_solicitud, cantidad))
+    # Insertar la solicitud en la base de datos con estado 0 (pendiente)
+    cursor.execute('''  
+        INSERT INTO SolicitudesEspacio (id_usuario, tipo_solicitud, cantidad, estado)
+        VALUES (?, ?, ?, ?)
+    ''', (current_user['id_usuario'], tipo_solicitud, cantidad, 0))
+
     conn.commit()
 
     return jsonify({'message': 'Solicitud de espacio realizada correctamente.'}), 201

@@ -23,6 +23,7 @@ import Settings from '../pages/client/Settings'
 import Profile from '../pages/client/Profile'
 import Backup from '../pages/client/Backup'
 import ClientDashboard from '../components/client/ClientDashboard'
+import ListRequest from '../pages/admin/ListRequest'
 
 const AppRouter: React.FC = () => {
   return (
@@ -43,6 +44,7 @@ const AppRouter: React.FC = () => {
         <Route path="users/inactive" element={<InactiveUsers />} />
         <Route path="users/modify-space" element={<ModifySpace />} />
         <Route path="notifications" element={<Notifications />} />
+        <Route path="requests" element={<ListRequest />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 

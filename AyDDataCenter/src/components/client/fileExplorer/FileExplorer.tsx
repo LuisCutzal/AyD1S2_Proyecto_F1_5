@@ -54,6 +54,7 @@ const FileExplorer: React.FC = () => {
         nombre_carpeta: nombreCarpeta,
         id_carpeta_padre: currentFolderId,
       })
+      addNotification({ type: 'success', message: 'Carpeta creada exitosamente.' })
       // Refrescar la lista de carpetas
       const data = await getDashboardData()
       setFolders(data.carpetas)
@@ -73,6 +74,7 @@ const FileExplorer: React.FC = () => {
       // Refrescar la lista de archivos
       const data = await getDashboardData()
       setFiles(data.archivos)
+      addNotification({ type: 'success', message: 'Archivo subido exitosamente.' })
     } catch (err: unknown) {
       console.error('Error al subir el archivo:', err)
       addNotification({
