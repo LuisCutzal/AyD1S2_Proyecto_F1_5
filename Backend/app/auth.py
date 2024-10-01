@@ -8,6 +8,7 @@ import re
 import jwt
 from datetime import datetime, timedelta
 import smtplib
+from app.decorators import token_required
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -195,6 +196,35 @@ def reset_password():
         return jsonify({"error": "El token ha expirado"}), 400
     except jwt.InvalidTokenError:
         return jsonify({"error": "Token inválido"}), 400
+
+@auth_bp.route('/me', methods=['GET'])
+@token_required
+def decoder(current_user):
+    #decodificamos el token
+    id_user = current_user['id_usuario']  # Puede ser el nombre de usuario o el correo
+    nombre_usuario = current_user['nombre_usuario']
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT id_usuario, nombre, apellido, nombre_usuario, email, celular, nacionalidad, pais_residencia, id_rol FROM Usuarios 
+        WHERE id_usuario = ? OR nombre_usuario = ?
+    ''',(id_user, nombre_usuario))
+    userData = cursor.fetchone()
+    listData = list(userData)
+    conn.close()
+    dataUser= {
+        "id_usuario": listData[0],
+        "nombre": listData[1],
+        "apellido": listData[2],
+        "nombre_usuario": listData[3],
+        "email": listData[4],
+        "celular": listData[5],
+        "nacionalidad":listData[6],
+        "pais_residencia": listData[7],
+        "id_rol": listData[8]
+        }
+    return jsonify(dataUser), 200
+
 
 # @auth_bp.route('/protected', methods=['GET'])
 # @token_required
