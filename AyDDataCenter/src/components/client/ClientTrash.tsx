@@ -1,9 +1,32 @@
 import { useState, useEffect } from 'react'
-import { emptyTrash } from '../../services/fileService'
+import { emptyTrash, getTrash } from '../../services/fileService'
+import useAppContext from '../../hooks/useAppContext'
+
+interface TrashData {
+  archivos_en_papelera: any[]
+  carpetas_en_papelera: any[]
+}
+
+interface Archivo {
+  id_archivo: number
+  nombre: string
+  tamaño: string
+  carpeta_id: number
+  tipo: string
+  url: string
+}
+
+interface Carpeta {
+  id_carpeta: number
+  nombre: string
+  padre: number | null
+}
 
 const ClientTrash: React.FC = () => {
-  const [trashItems, setTrashItems] = useState<any[]>([])
+  const [archivos, setArchivos] = useState<Archivo[]>([])
+  const [carpetas, setCarpetas] = useState<Carpeta[]>([])
   const [loading, setLoading] = useState<boolean>(false)
+  const { addNotification } = useAppContext()
 
   useEffect(() => {
     fetchTrashItems()
@@ -12,30 +35,27 @@ const ClientTrash: React.FC = () => {
   const fetchTrashItems = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/trash')
-      const data = await response.json()
-      setTrashItems(data)
+      const data: TrashData = await getTrash()
+      setArchivos(data.archivos_en_papelera ?? [])
+      setCarpetas(data.carpetas_en_papelera ?? [])
     } catch (error) {
       console.error('Error al cargar la papelera:', error)
     } finally {
       setLoading(false)
     }
   }
-
-  const handleRestore = async (itemId: string) => {
-    // Implementa la lógica para restaurar el elemento
-  }
-
-  const handleDeletePermanently = async (itemId: string) => {
-    // Implementa la lógica para eliminar permanentemente el elemento
-  }
-
+  
   const handleEmptyTrash = async () => {
     try {
       const response = await emptyTrash()
-      
+      addNotification({
+        type: 'success',
+        message: response.message
+      })
+      setArchivos([])
+      setCarpetas([])
     } catch (error) {
-      
+      addNotification({ type: 'error', message: 'Error al vaciar la papelera.' })
     } finally {
       setLoading(false)
     }
@@ -51,38 +71,66 @@ const ClientTrash: React.FC = () => {
         >
           Vaciar Papelera
         </button>
+       
       </div>
       {loading ? (
         <p>Cargando papelera...</p>
-      ) : trashItems.length > 0 ? (
-        <ul>
-          {trashItems.map((item) => (
-            <li key={item.id} className="border-b py-2 flex justify-between items-center">
-              <div>
-                {item.type === 'folder' ? '📁' : '📄'} {item.name}
-              </div>
-              <div>
-                <button
-                  className="text-green-500 mr-4"
-                  onClick={() => handleRestore(item.id)}
-                >
-                  Restaurar
-                </button>
-                <button
-                  className="text-red-500"
-                  onClick={() => handleDeletePermanently(item.id)}
-                >
-                  Eliminar
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
+      ) : archivos.length === 0 && carpetas.length === 0 ? (
         <p>La papelera está vacía.</p>
+      ) : (
+        <div>
+          {carpetas.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold mb-2">Carpetas</h3>
+              <ul>
+                {carpetas.map((carpeta) => (
+                  <li key={carpeta.id_carpeta} className="border-b py-2">
+                    📁 {carpeta.nombre}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {archivos.length > 0 && (
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Archivos</h3>
+              <ul>
+                {archivos.map((archivo) => (
+                  <li key={archivo.id_archivo} className="border-b py-2 flex items-center">
+                    {/*agregar íconos basados en el tipo de archivo */}
+                    {getFileIcon(archivo.tipo)} {archivo.nombre}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
+}
+
+// Función auxiliar para obtener íconos según el tipo de archivo
+const getFileIcon = (tipo: string) => {
+  switch (tipo) {
+    case 'pdf':
+      return '📄'
+    case 'txt':
+      return '📄'
+    case 'jpg':
+    case 'png':
+      return '🖼️'
+    case 'mp3':
+    case 'wav':
+      return '🎵'
+    case 'mp4':
+    case 'webm':
+      return '🎬'
+    case 'pptx':
+      return '📊'
+    default:
+      return '📁'
+  }
 }
 
 export default ClientTrash

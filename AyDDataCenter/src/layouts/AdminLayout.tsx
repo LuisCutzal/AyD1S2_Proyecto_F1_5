@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom'
 import Header from '../components/shared/Header'    
 import Sidebar from '../components/shared/Sidebar'
 import Footer from '../components/shared/Footer'
-import { FaHome, FaUsers, FaUserPlus, FaList, FaChartBar, FaBell } from 'react-icons/fa'
+import { FaHome, FaUsers, FaUserPlus, FaList, FaChartBar, FaBell, FaListUl } from 'react-icons/fa'
 
 const AdminLayout: React.FC = () => {
 
@@ -42,8 +42,13 @@ const AdminLayout: React.FC = () => {
       label: 'Enviar Notificaciones',
       path: '/admin/notifications',
       icon: <FaBell />,
+    },
+    {
+      section: 'Notificaciones',
+      label: 'Solicitudes',
+      path: '/admin/requests', 
+      icon: <FaListUl />,
     }
-    
   ]
 
 

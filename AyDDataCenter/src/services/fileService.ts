@@ -12,6 +12,11 @@ interface FileData {
     id_carpeta?: number
 }
 
+interface Papelera{
+    archivos_en_papelera: unknown[]
+    carpetas_en_papelera: unknown[]
+}
+
 interface DashboardData {
     archivos: unknown[]
     carpetas: unknown[]
@@ -337,6 +342,38 @@ export const emptyTrash = async () => {
         return data
     } catch (error) {
         console.error('Error en emptyTrash:', error)
+        throw error
+    }
+}
+
+/**
+ * Listas carpetas y archivos de la papelera.
+ * @returns Listas de carpetas y archivos de la papelera.
+ * @throws Error en caso de falla en la petición.
+ */
+
+export const getTrash = async (): Promise<Papelera> => {
+    try {
+        const token = localStorage.getItem('authToken')
+
+        if (!token) {
+            throw new Error('No hay token de autenticación.')
+        }
+
+        const response = await fetch(`${API_BASE_URL}/cliente/papelera`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+
+        if (!response.ok) {
+            throw new Error('Error al obtener datos de la papelera.')
+        }
+
+        const data: Papelera = await response.json()
+        return data
+    } catch (error) {
+        console.error('Error en getTrash:', error)
         throw error
     }
 }

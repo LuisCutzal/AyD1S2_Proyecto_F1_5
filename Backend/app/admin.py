@@ -206,20 +206,20 @@ def remove_user_data(current_user, id_usuario):
         user_data = cursor.fetchone()
         if not user_data:
             return jsonify({"error": "Usuario no encontrado"}), 404
+        cursor.execute('DELETE FROM Favoritos WHERE id_usuario = ?', (id_usuario,))
+        cursor.execute('DELETE FROM Backups_Cifrados WHERE id_usuario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Archivos WHERE id_usuario_propietario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Carpetas WHERE id_usuario_propietario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Etiquetas WHERE id_usuario = ?', (id_usuario,))
-        cursor.execute('DELETE FROM Favoritos WHERE id_usuario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Actividades_Recientes WHERE id_usuario = ?', (id_usuario,))
-        cursor.execute('DELETE FROM Backups_Cifrados WHERE id_usuario = ?', (id_usuario,))
         cursor.execute('DELETE FROM Compartidos WHERE id_usuario_propietario = ? OR id_usuario_destinatario = ?', (id_usuario, id_usuario))
-
         cursor.execute('UPDATE Usuarios SET espacio_ocupado = 0 WHERE id_usuario = ?', (id_usuario,))
         conn.commit()
         return jsonify({"message": "Toda la información del usuario ha sido eliminada correctamente."}), 200
     except Exception as e:
         conn.rollback()
-        return 500
+        print(f"Error: {e}")
+        return jsonify({"error": "Error interno del servidor"}), 500
 
     finally:
         # Cerrar la conexión
@@ -227,17 +227,19 @@ def remove_user_data(current_user, id_usuario):
 
         
 
-@admin_bp.route('/admin/solicitudes/espacio', methods=['GET'])
+# Endpoint para ver solicitudes de espacio
+@admin_bp.route('/solicitudes/espacio', methods=['GET']) 
 @token_required
 @admin_required
 def ver_solicitudes_espacio(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute('''
+    cursor.execute('''  
         SELECT s.id_solicitud, u.nombre, s.tipo_solicitud, s.cantidad, s.estado, s.fecha_solicitud
         FROM SolicitudesEspacio s
         JOIN Usuarios u ON s.id_usuario = u.id_usuario
+        WHERE s.estado = 0
     ''')
     
     solicitudes = cursor.fetchall()
@@ -250,3 +252,54 @@ def ver_solicitudes_espacio(current_user):
         'estado': solicitud.estado,
         'fecha_solicitud': solicitud.fecha_solicitud
     } for solicitud in solicitudes]), 200
+
+
+# Nuevo endpoint para aceptar una solicitud de espacio
+@admin_bp.route('/solicitudes/espacio/aceptar/<int:id_solicitud>', methods=['PUT'])
+@token_required
+@admin_required
+def aceptar_solicitud_espacio(current_user, id_solicitud):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Obtener la solicitud para verificar los detalles
+    cursor.execute('''
+        SELECT id_usuario, tipo_solicitud, cantidad
+        FROM SolicitudesEspacio
+        WHERE id_solicitud = ?
+    ''', (id_solicitud,))
+    
+    solicitud = cursor.fetchone()
+
+    # Verificar si la solicitud existe
+    if not solicitud:
+        return jsonify({'error': 'Solicitud no encontrada.'}), 404
+
+    id_usuario = solicitud.id_usuario
+    tipo_solicitud = solicitud.tipo_solicitud
+    cantidad = solicitud.cantidad
+
+    # Modificar el espacio asignado según el tipo de solicitud
+    if tipo_solicitud == 'expandir':
+        cursor.execute('''
+            UPDATE Usuarios
+            SET espacio_asignado = ?
+            WHERE id_usuario = ?
+        ''', (cantidad, id_usuario))
+    elif tipo_solicitud == 'reducir':
+        cursor.execute('''
+            UPDATE Usuarios
+            SET espacio_asignado = ?
+            WHERE id_usuario = ?
+        ''', (cantidad, id_usuario))
+
+    # Cambiar el estado de la solicitud a "Aceptada" (estado 1)
+    cursor.execute('''
+        UPDATE SolicitudesEspacio
+        SET estado = 1
+        WHERE id_solicitud = ?
+    ''', (id_solicitud,))
+
+    conn.commit()
+
+    return jsonify({'message': 'Solicitud aceptada y espacio asignado modificado exitosamente.'}), 200

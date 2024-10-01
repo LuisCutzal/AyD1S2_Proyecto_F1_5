@@ -57,22 +57,22 @@ export const getUsers = async (): Promise<User[]> => {
   const token = localStorage.getItem('authToken')
 
   try {
-    // const response = await fetch(`${API_BASE_URL}/admin/users`, {
-    //   method: 'GET',
-    //   headers: {
-    //     Authorization: `Bearer ${token}`,
-    //   },
-    // })
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-    // if (response.status === 200) {
-    //   const data = await response.json()
-    //   return data
-    // } else {
-    //   const errorData = await response.json()
-    //   throw new Error(errorData.error || 'Error al obtener usuarios.')
-    // }
-    const data = adminUsers
-    return data
+    if (response.status === 200) {
+      const data = await response.json()
+      return data
+    } else {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al obtener usuarios.')
+    }
+    //const data = adminUsers
+    //return data
   } catch (error) {
     console.error('Error al obtener usuarios:', error)
     throw error
@@ -91,22 +91,22 @@ export const getInactiveUsers = async (): Promise<InactiveUser[]> => {
   const token = localStorage.getItem('authToken')
 
   try {
-    // const response = await fetch(`${API_BASE_URL}/admin/users/inactive`, {
-    //   method: 'GET',
-    //   headers: {
-    //     Authorization: `Bearer ${token}`,
-    //   },
-    // })
+    const response = await fetch(`${API_BASE_URL}/admin/users/inactive`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-    // if (response.status === 200) {
-    //   const data = await response.json()
-    //   return data
-    // } else {
-    //   const errorData = await response.json()
-    //   throw new Error(errorData.error || 'Error al obtener usuarios inactivos.')
-    // }
-    const data = dataUserInactive
-    return data
+    if (response.status === 200) {
+      const data = await response.json()
+      return data
+    } else {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al obtener usuarios inactivos.')
+    }
+    //const data = dataUserInactive
+    //return data
   } catch (error) {
     console.error('Error al obtener usuarios inactivos:', error)
     throw error
@@ -186,6 +186,66 @@ export const removeUserData = async (id_usuario: number) => {
     }
   } catch (error) {
     console.error('Error al eliminar información del usuario:', error)
+    throw error
+  }
+}
+
+export interface SpaceRequest {
+  id_solicitud: number,
+  nombre_usuario: string,
+  tipo_solicitud: string,
+  cantidad: string,
+  estado: string,
+  fecha_solicitud: string
+}
+
+// Obtener Solicitudes de Espacio
+export const getSpaceRequests = async (): Promise<SpaceRequest[]> => {
+  const token = localStorage.getItem('authToken')
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/solicitudes/espacio`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (response.status === 200) {
+      const data = await response.json()
+      console.log(data)
+      return data
+    } else {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al obtener solicitudes de espacio.')
+    }
+  } catch (error) {
+    console.error('Error al obtener solicitudes de espacio:', error)
+    throw error
+  }
+}
+
+// Aceptar Solicitud de Espacio 
+export const acceptSpaceRequest = async (id_solicitud: number) => {
+  const token = localStorage.getItem('authToken')
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/solicitudes/espacio/aceptar/${id_solicitud}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (response.status === 200) {
+      const data = await response.json()
+      return data
+    } else {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al aceptar la solicitud.')
+    }
+  } catch (error) {
+    console.error('Error al aceptar solicitud de espacio:', error)
     throw error
   }
 }
