@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request,redirect
 from app.connection import get_db_connection
 from app.decorators import token_required, cliente_required
 import os
@@ -496,3 +496,34 @@ def solicitar_espacio(current_user):
     conn.commit()
 
     return jsonify({'message': 'Solicitud de espacio realizada correctamente.'}), 201
+
+#fase2
+
+@cliente_bp.route('/archivos/<int:id_archivo>/previsualizar', methods=['GET'])
+@token_required
+@cliente_required
+def previsualizar_archivo(current_user, id_archivo):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT url_archivo
+            FROM Archivos
+            WHERE id_archivo = ? AND id_usuario_propietario = ?
+        ''', (id_archivo, current_user['id_usuario']))
+        
+        archivo = cursor.fetchone()
+        
+        if archivo:
+            url_archivo = archivo[0]
+            return jsonify({'url_archivo': url_archivo}), 200  # Enviar URL al front-end
+        else:
+            return jsonify({'error': 'Archivo no encontrado'}), 404
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()

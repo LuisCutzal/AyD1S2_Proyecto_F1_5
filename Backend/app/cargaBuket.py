@@ -21,10 +21,7 @@ def uploadFileBucket(file, s3fileName):
         )
 
         s3.upload_fileobj(file,AWS_BUCKET_NAME,s3fileName)
-        url = s3.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': AWS_BUCKET_NAME, 'Key': s3fileName}
-        )
+        url = f"https://{AWS_BUCKET_NAME}.s3.amazonaws.com/{s3fileName}"
         return url
     
     except NoCredentialsError as e:
