@@ -527,3 +527,123 @@ def previsualizar_archivo(current_user, id_archivo):
     finally:
         cursor.close()
         conn.close()
+
+
+@cliente_bp.route('/favoritos', methods=['GET'])
+@token_required
+@cliente_required
+def obtener_favoritos(current_user):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Obtener las carpetas favoritas del usuario
+        cursor.execute('''
+            SELECT f.id_favorito, c.id_carpeta, c.nombre_carpeta, c.id_carpeta_padre
+            FROM Favoritos f
+            JOIN Carpetas c ON f.id_carpeta = c.id_carpeta
+            WHERE f.id_usuario = ? AND f.id_carpeta IS NOT NULL
+        ''', (current_user['id_usuario'],))
+        carpetas_favoritas = cursor.fetchall()
+
+        # Obtener los archivos favoritos del usuario
+        cursor.execute('''
+            SELECT f.id_favorito, a.id_archivo, a.nombre_archivo, a.tamano_mb, a.id_carpeta
+            FROM Favoritos f
+            JOIN Archivos a ON f.id_archivo = a.id_archivo
+            WHERE f.id_usuario = ? AND f.id_archivo IS NOT NULL
+        ''', (current_user['id_usuario'],))
+        archivos_favoritos = cursor.fetchall()
+
+        return jsonify({
+            'carpetas_favoritas': [{'id_favorito': c[0], 'id_carpeta': c[1], 'nombre_carpeta': c[2], 'id_carpeta_padre': c[3]} for c in carpetas_favoritas],
+            'archivos_favoritos': [{'id_favorito': a[0], 'id_archivo': a[1], 'nombre_archivo': a[2], 'tamano_mb': a[3], 'id_carpeta': a[4]} for a in archivos_favoritos]
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@cliente_bp.route('/favoritos/agregar', methods=['POST'])
+@token_required
+@cliente_required
+def agregar_favorito(current_user):
+    try:
+        data = request.json  # Obtener los datos del cuerpo de la petición
+        id_archivo = data.get('id_archivo')
+        id_carpeta = data.get('id_carpeta')
+
+        # Validar que uno de los dos esté presente y que no se envíen ambos
+        if not id_archivo and not id_carpeta:
+            return jsonify({'error': 'Debe proporcionar un id de archivo o carpeta para agregar a favoritos'}), 400
+
+        if id_archivo and id_carpeta:
+            return jsonify({'error': 'Solo puede agregar un archivo o una carpeta a la vez, no ambos'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Verificar que el archivo o carpeta pertenezca al usuario
+        if id_archivo:
+            cursor.execute('''
+                SELECT id_archivo
+                FROM Archivos
+                WHERE id_archivo = ? AND id_usuario_propietario = ?
+            ''', (id_archivo, current_user['id_usuario']))
+            archivo = cursor.fetchone()
+
+            if not archivo:
+                return jsonify({'error': 'Archivo no encontrado'}), 404
+
+            # Verificar si el archivo ya está en favoritos
+            cursor.execute('''
+                SELECT id_favorito
+                FROM Favoritos
+                WHERE id_usuario = ? AND id_archivo = ?
+            ''', (current_user['id_usuario'], id_archivo))
+            favorito_existente = cursor.fetchone()
+
+            if favorito_existente:
+                return jsonify({'error': 'El archivo ya está en favoritos'}), 400
+
+        if id_carpeta:
+            cursor.execute('''
+                SELECT id_carpeta
+                FROM Carpetas
+                WHERE id_carpeta = ? AND id_usuario_propietario = ?
+            ''', (id_carpeta, current_user['id_usuario']))
+            carpeta = cursor.fetchone()
+
+            if not carpeta:
+                return jsonify({'error': 'Carpeta no encontrada'}), 404
+
+            # Verificar si la carpeta ya está en favoritos
+            cursor.execute('''
+                SELECT id_favorito
+                FROM Favoritos
+                WHERE id_usuario = ? AND id_carpeta = ?
+            ''', (current_user['id_usuario'], id_carpeta))
+            favorito_existente = cursor.fetchone()
+
+            if favorito_existente:
+                return jsonify({'error': 'La carpeta ya está en favoritos'}), 400
+
+        # Agregar a favoritos
+        cursor.execute('''
+            INSERT INTO Favoritos (id_usuario, id_archivo, id_carpeta)
+            VALUES (?, ?, ?)
+        ''', (current_user['id_usuario'], id_archivo, id_carpeta))
+        conn.commit()
+
+        return jsonify({'message': 'Favorito agregado exitosamente'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
