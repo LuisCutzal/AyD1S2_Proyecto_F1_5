@@ -3,9 +3,12 @@ from app.connection import get_db_connection
 from app.decorators import token_required, cliente_required
 import os
 from werkzeug.utils import secure_filename
-from app.cargaBuket import uploadFileBucket
+from app.cargaBuket import uploadFileBucket ,download_file_from_s3
 from datetime import datetime
-
+from cryptography.fernet import Fernet
+from flask import jsonify, request
+from io import BytesIO
+from werkzeug.exceptions import BadRequest
 cliente_bp = Blueprint('cliente', __name__)
 
 @cliente_bp.route('/dashboard', methods=['GET'])  
@@ -640,6 +643,93 @@ def agregar_favorito(current_user):
         conn.commit()
 
         return jsonify({'message': 'Favorito agregado exitosamente'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+from io import BytesIO
+from cryptography.fernet import Fernet
+from flask import jsonify, request
+from werkzeug.exceptions import BadRequest
+
+# Generar una clave de cifrado
+def generar_clave():
+    return Fernet.generate_key()
+
+# Función para cifrar datos en memoria
+def cifrar_datos(datos, clave):
+    fernet = Fernet(clave)
+    return fernet.encrypt(datos)
+
+# Endpoint para crear un backup cifrado
+@cliente_bp.route('/backups/cifrar', methods=['POST'])
+@token_required
+@cliente_required
+def crear_backup_cifrado(current_user):
+    try:
+        data = request.json
+        id_archivo = data.get('id_archivo')
+        nombre_backup = data.get('nombre_backup')
+
+        if not id_archivo or not nombre_backup:
+            return jsonify({'error': 'Debe proporcionar id_archivo y nombre_backup'}), 400
+
+        # Verificar que el archivo pertenezca al usuario
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Obtener la URL del archivo desde la base de datos
+        cursor.execute('''SELECT id_archivo, url_archivo, tamano_mb 
+                        FROM Archivos 
+                        WHERE id_archivo = ? AND id_usuario_propietario = ?''',
+                    (id_archivo, current_user['id_usuario']))
+        archivo = cursor.fetchone()
+
+        if not archivo:
+            return jsonify({'error': 'Archivo no encontrado o no pertenece al usuario'}), 404
+
+        # Extraer el nombre del archivo de la URL
+        nombre_archivo = archivo[1].split('/')[-1]  # Obtener solo el nombre del archivo
+        print(nombre_archivo)
+        # Descargar el archivo desde S3 usando el nombre extraído
+        archivo_obj = download_file_from_s3(nombre_archivo)  # Pasa solo el nombre del archivo
+        
+        # Generar una nueva clave de cifrado
+        clave_cifrado = generar_clave()
+        
+        # Cifrar los datos del archivo
+        archivo_cifrado = cifrar_datos(archivo_obj.read(), clave_cifrado)
+
+        # Generar un timestamp para el nombre del archivo
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')  # Formato: YYYYMMDD_HHMMSS_mili
+        s3fileName = f"{nombre_backup}_{timestamp}.enc"  # Modificar el nombre del archivo
+
+        # Subir el archivo cifrado a S3
+        archivo_cifrado_obj = BytesIO(archivo_cifrado)
+        archivo_cifrado_obj.seek(0)  # Asegurarse de estar al principio del archivo
+        url_backup = uploadFileBucket(archivo_cifrado_obj, s3fileName)
+
+        # Guardar información del backup en la base de datos
+        tamanio_backup = len(archivo_cifrado)  # Obtener el tamaño del backup
+        cursor.execute('''INSERT INTO Backups_Cifrados 
+                          (id_usuario, id_archivo, nombre_backup, ruta_backup, clave_cifrado, tamanio_backup) 
+                          VALUES (?, ?, ?, ?, ?, ?)''',
+                       (current_user['id_usuario'], archivo[0], nombre_backup, url_backup, clave_cifrado.decode(), tamanio_backup))
+        conn.commit()
+
+        return jsonify({
+            'message': 'Backup cifrado creado exitosamente',
+            'url': url_backup,
+            'claveDescifrado': clave_cifrado.decode()  # Incluir la clave de cifrado en la respuesta
+        }), 201
+
+    except BadRequest as e:
+        return jsonify({'error': str(e)}), 400
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
