@@ -150,6 +150,7 @@ CREATE TABLE Compartidos (
     id_carpeta INT NULL,
     id_archivo INT NULL,
     fecha_comparticion DATETIME DEFAULT GETDATE(),
+
     FOREIGN KEY (id_usuario_propietario) REFERENCES Usuarios(id_usuario),
     FOREIGN KEY (id_usuario_destinatario) REFERENCES Usuarios(id_usuario),
     FOREIGN KEY (id_carpeta) REFERENCES Carpetas(id_carpeta),
@@ -176,3 +177,8 @@ ALTER TABLE Usuarios ADD fecha_fin_periodo_gratuito DATETIME;
 
 ALTER TABLE Archivos
 ADD url_archivo NVARCHAR(500) NULL;
+
+/* VGOMEZ */
+
+ALTER TABLE Compartidos
+ADD estado NVARCHAR(10) NULL

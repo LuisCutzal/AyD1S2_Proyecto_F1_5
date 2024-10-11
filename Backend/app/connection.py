@@ -1,5 +1,5 @@
 import pyodbc
-from dotenv import load_dotenv  # Importamos python-dotenv para cargar el .env
+#from dotenv import load_dotenv  # Importamos python-dotenv para cargar el .env
 import os
 
 # Cargar variables de entorno
@@ -22,14 +22,14 @@ import os
 #         return None
 
 
-load_dotenv()
-server = 'DESKTOP-E6KH831' 
+#load_dotenv()
+server = 'EU-DES-DES16' 
 database = 'AYD_DataCenter'
 
 def get_db_connection():
     try:
         # Conexión al servidor SQL con autenticación de Windows
-        conexion = pyodbc.connect(f'DRIVER={{SQL Server}};SERVER={'DESKTOP-E6KH831'};DATABASE={'AYD_DataCenter'};Trusted_Connection=yes;', autocommit=True)
+        conexion = pyodbc.connect(f'DRIVER={{SQL Server}};SERVER=EU-DES-DES16\\SQLEXPRESS;DATABASE=AYD_DataCenter;UID=sa;PWD=Optimuz2024$$;', autocommit=True)
         return conexion
     except pyodbc.Error as e:
         print(f"Error al conectar a SQL Server: {e}")
