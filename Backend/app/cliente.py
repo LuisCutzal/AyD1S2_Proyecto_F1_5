@@ -652,10 +652,7 @@ def agregar_favorito(current_user):
         conn.close()
 
 
-from io import BytesIO
-from cryptography.fernet import Fernet
-from flask import jsonify, request
-from werkzeug.exceptions import BadRequest
+
 
 # Generar una clave de cifrado
 def generar_clave():
@@ -695,7 +692,6 @@ def crear_backup_cifrado(current_user):
 
         # Extraer el nombre del archivo de la URL
         nombre_archivo = archivo[1].split('/')[-1]  # Obtener solo el nombre del archivo
-        print(nombre_archivo)
         # Descargar el archivo desde S3 usando el nombre extraído
         archivo_obj = download_file_from_s3(nombre_archivo)  # Pasa solo el nombre del archivo
         
@@ -730,6 +726,116 @@ def crear_backup_cifrado(current_user):
 
     except BadRequest as e:
         return jsonify({'error': str(e)}), 400
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# Función para descifrar datos
+def descifrar_datos(datos_cifrados, clave):
+    fernet = Fernet(clave.encode()) if isinstance(clave, str) else Fernet(clave)
+    return fernet.decrypt(datos_cifrados)
+
+# Endpoint para descifrar un backup
+
+@cliente_bp.route('/backups/descifrar/<int:id_backup>', methods=['POST'])
+@token_required
+@cliente_required
+def descifrar_backup(current_user, id_backup):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Obtener la URL, clave de descifrado y id_archivo
+        cursor.execute('''SELECT ruta_backup, clave_cifrado, id_archivo 
+                          FROM Backups_Cifrados 
+                          WHERE id_backup = ? AND id_usuario = ?''',
+                       (id_backup, current_user['id_usuario']))
+        resultado = cursor.fetchone()
+
+        if resultado is None:
+            print(f"No se encontró backup para id_backup: {id_backup} y id_usuario: {current_user['id_usuario']}")
+            return jsonify({'error': 'Backup no encontrado o no pertenece al usuario'}), 404
+
+        url_backup, clave_descifrado, id_archivo = resultado  # Asignar la URL, clave y id_archivo
+
+        # Obtener el nombre del archivo desde la tabla Archivos usando id_archivo
+        cursor.execute('''SELECT nombre_archivo 
+                          FROM Archivos 
+                          WHERE id_archivo = ?''', (id_archivo,))
+        archivo_resultado = cursor.fetchone()
+
+        if archivo_resultado is None:
+            print(f"No se encontró archivo con id_archivo: {id_archivo}")
+            return jsonify({'error': 'Archivo no encontrado'}), 404
+
+        nombre_archivo = archivo_resultado[0]  # Obtener el nombre del archivo
+
+        # Extraer la extensión del archivo usando split
+        nombre_dividido = nombre_archivo.rsplit('.', 1)  # Divide por el último punto
+        if len(nombre_dividido) == 2:
+            extension_archivo = nombre_dividido[1]  # Obtén la extensión (la parte después del punto)
+        else:
+            extension_archivo = 'desconocido'  # Si no hay extensión, usa un valor predeterminado
+
+        # Descargar el archivo cifrado desde S3
+        archivo_cifrado_obj = download_file_from_s3(url_backup.split('/')[-1])  # Obtiene solo el nombre del archivo
+        
+        archivo_cifrado = archivo_cifrado_obj.read()  # Lee el contenido del archivo
+
+        # Desencriptar el archivo
+        fernet = Fernet(clave_descifrado.encode())
+        contenido_descifrado = fernet.decrypt(archivo_cifrado)  # Desencripta el archivo
+
+        # Guardar el archivo descifrado en el sistema de archivos con la extensión extraída
+        nombre_archivo_descifrado = f"descifrado_{id_backup}.{extension_archivo}"  # Usa la extensión correcta
+        with open(nombre_archivo_descifrado, 'wb') as f:
+            f.write(contenido_descifrado)
+
+        return jsonify({
+            'message': 'Archivo descifrado exitosamente'
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@cliente_bp.route('/backups', methods=['GET'])
+@token_required
+@cliente_required
+def obtener_backups_cifrados(current_user):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Consultar todos los backups cifrados del usuario actual
+        cursor.execute('''SELECT id_backup, ruta_backup, fecha_creacion ,nombre_backup
+                          FROM Backups_Cifrados 
+                          WHERE id_usuario = ?''', (current_user['id_usuario'],))
+        backups = cursor.fetchall()
+
+        # Si no se encontraron backups
+        if not backups:
+            return jsonify({'message': 'No se encontraron backups cifrados para este usuario'}), 404
+
+        # Crear una lista de los backups
+        lista_backups = []
+        for backup in backups:
+            id_backup, ruta_backup, fecha_creacion,nombre_backup = backup
+            lista_backups.append({
+                'id_backup': id_backup,
+                'ruta_backup': ruta_backup,
+                'fecha_creacion': fecha_creacion.strftime('%Y-%m-%d %H:%M:%S'),  # Convertir a string legible
+                'nombre_backup': nombre_backup
+            })
+
+        return jsonify({'backups': lista_backups}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

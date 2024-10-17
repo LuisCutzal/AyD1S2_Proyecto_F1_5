@@ -57,21 +57,3 @@ def download_file_from_s3(s3file_name):
     except Exception as e:
         print(f"Error inesperado: {str(e)}")
         raise
-
-
-def list_files_in_bucket():
-    s3 = boto3.client('s3')
-    try:
-        response = s3.list_objects_v2(Bucket=AWS_BUCKET_NAME)
-        if 'Contents' in response:
-            print("Archivos en el bucket:")
-            for obj in response['Contents']:
-                print(obj['Key'])  # Imprime el nombre completo del archivo
-        else:
-            print("No hay archivos en el bucket.")
-    except ClientError as e:
-        print("Error al listar los archivos:")
-        print(e)
-
-# Llama a la función para listar archivos
-list_files_in_bucket()
