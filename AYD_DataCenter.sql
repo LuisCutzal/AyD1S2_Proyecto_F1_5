@@ -50,6 +50,8 @@ CREATE TABLE Carpetas (
     id_carpeta_padre INT NULL,
     fecha_creacion DATETIME DEFAULT GETDATE(),
     en_papelera BIT DEFAULT 0,
+    id_carpeta_aux INT NULL,
+    visable BIT DEFAULT 0,
     FOREIGN KEY (id_usuario_propietario) REFERENCES Usuarios(id_usuario),
     FOREIGN KEY (id_carpeta_padre) REFERENCES Carpetas(id_carpeta)
 );
@@ -65,6 +67,8 @@ CREATE TABLE Archivos (
     fecha_creacion DATETIME DEFAULT GETDATE(),
     fecha_modificacion DATETIME DEFAULT GETDATE(),
     en_papelera BIT DEFAULT 0,
+    id_carpeta_aux INT NULL,
+    visable BIT DEFAULT 0,
     FOREIGN KEY (id_carpeta) REFERENCES Carpetas(id_carpeta),
     FOREIGN KEY (id_usuario_propietario) REFERENCES Usuarios(id_usuario)
 );
