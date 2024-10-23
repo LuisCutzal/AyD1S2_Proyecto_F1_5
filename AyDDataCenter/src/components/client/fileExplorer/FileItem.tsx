@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { FaFileAlt, FaEllipsisV } from 'react-icons/fa'
 import { deleteFile, updateFile, downloadFile } from '../../../services/fileService'
-import Modal from '../../shared/Modal' // Ajusta la ruta según tu estructura
-import FilePreview from '../../shared/FilePreview' // Ajusta la ruta según tu estructura
+import Modal from '../../shared/Modal'
+import FilePreview from '../../shared/FilePreview'
+import useAppContext from '../../../hooks/useAppContext'
 
 interface Archivo {
   id_archivo: number
@@ -21,6 +22,7 @@ interface FileItemProps {
 const FileItem: React.FC<FileItemProps> = ({ file, refreshFiles }) => {
   const [showMenu, setShowMenu] = useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const { addNotification } = useAppContext()
 
   const handleDownloadFile = async () => {
     try {
@@ -33,7 +35,7 @@ const FileItem: React.FC<FileItemProps> = ({ file, refreshFiles }) => {
       document.body.appendChild(a)
       a.click()
       a.remove()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error al descargar el archivo:', err)
       alert('Error al descargar el archivo. Por favor, inténtelo de nuevo.')
     }
@@ -43,11 +45,12 @@ const FileItem: React.FC<FileItemProps> = ({ file, refreshFiles }) => {
     const nuevoNombre = prompt('Ingrese el nuevo nombre del archivo:', file.nombre)
     if (nuevoNombre && nuevoNombre !== file.nombre) {
       try {
-        await updateFile(file.id_archivo, { nombre: nuevoNombre })
+        await updateFile(file.id_archivo, { nombre_archivo: nuevoNombre })
+        addNotification({ type: 'success', message: 'Nombre de archivo actualizado.' })
         refreshFiles()
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error al renombrar el archivo:', err)
-        alert('Error al renombrar el archivo. Por favor, inténtelo de nuevo.')
+        addNotification({ type: 'error', message: 'Error al renombrar el archivo.' })
       }
     }
   }
@@ -57,10 +60,11 @@ const FileItem: React.FC<FileItemProps> = ({ file, refreshFiles }) => {
     if (confirmDelete) {
       try {
         await deleteFile(file.id_archivo)
+        addNotification({ type: 'success', message: 'Archivo eliminado exitosamente.' })
         refreshFiles()
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error al eliminar el archivo:', err)
-        alert('Error al eliminar el archivo. Por favor, inténtelo de nuevo.')
+        addNotification({ type: 'error', message: 'Error al eliminar el archivo.' })
       }
     }
   }
@@ -69,11 +73,16 @@ const FileItem: React.FC<FileItemProps> = ({ file, refreshFiles }) => {
     <div className="border rounded p-4 bg-white shadow hover:shadow-lg transition relative">
       <div className="flex items-center justify-between">
         <div
-          className="flex items-center cursor-pointer"
+          className="flex items-center cursor-pointer w-full"
           onClick={() => setIsPreviewOpen(true)}
         >
-          <FaFileAlt className="text-blue-500 mr-2" size={24} />
-          <span className="font-semibold truncate max-w-xs">{file.nombre}</span>
+          <FaFileAlt className="text-blue-500 mr-2 flex-shrink-0" size={24} />
+          <span
+            className="font-semibold truncate flex-1"
+            title={file.nombre}
+          >
+            {file.nombre}
+          </span>
         </div>
         <div className="relative">
           <button

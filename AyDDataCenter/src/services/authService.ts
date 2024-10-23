@@ -114,25 +114,25 @@ interface UserData {
 
 export const getUserData = async () => {
   try {
-    // const token = localStorage.getItem('authToken')
+    const token = localStorage.getItem('authToken')
 
-    // if (!token) {
-    //   throw new Error('No hay token de autenticación.')
-    // }
+    if (!token) {
+      throw new Error('No hay token de autenticación.')
+    }
 
-    // const response = await fetch(`${API_BASE_URL}/auth/me`, {
-    //   method: 'GET',
-    //   headers: {
-    //     Authorization: `Bearer ${token}`,
-    //   },
-    // })
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-    // if (!response.ok) {
-    //   throw new Error('Error al obtener datos del usuario.')
-    // }
+    if (!response.ok) {
+      throw new Error('Error al obtener datos del usuario.')
+    }
 
-    // const data = await response.json()
-    const data = dataUser
+    const data = await response.json()
+    //const data = dataUser
     
     if (data.id_rol === 1) {
       data.role = 'Administrador'
@@ -214,6 +214,75 @@ export const updateProfile = async (profileData: ProfileData) => {
     return data
   } catch (error) {
     console.error('Error en updateProfile:', error)
+    throw error
+  }
+}
+
+/** Solicitar espacio expandir or reducir espacio asignado
+ * @param spaceData - Datos de la solicitud de espacio.
+ * @returns Mensaje de éxito.
+ * @throws Error en caso de falla en la petición.
+ * */
+
+export const requestSpace = async (spaceData: { tipo_solicitud: string, cantidad: number }) => {
+  try {
+    const token = localStorage.getItem('authToken')
+
+    if (!token) {
+      throw new Error('No hay token de autenticación.')
+    }
+
+    const response = await fetch(`${API_BASE_URL}/cliente/solicitar/espacio`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(spaceData),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al solicitar espacio.')
+    }
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error en requestSpace:', error)
+    throw error
+  }
+}
+
+/**
+ * Eliminar la cuenta del usuario.
+ * @returns Mensaje de éxito.
+ * @throws Error en caso de falla en la petición.
+ */
+export const deleteAccount = async () => {
+  try {
+    const token = localStorage.getItem('authToken')
+
+    if (!token) {
+      throw new Error('No hay token de autenticación.')
+    }
+
+    const response = await fetch(`${API_BASE_URL}/cliente/eliminar`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Error al eliminar la cuenta.')
+    }
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error en deleteAccount:', error)
     throw error
   }
 }
