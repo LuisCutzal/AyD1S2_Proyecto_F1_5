@@ -101,7 +101,7 @@ def login_user():
         }, current_app.config['SECRET_KEY'], algorithm='HS256')
         return jsonify({"message": "Login successful", "token": token}), 200
     else:
-        return jsonify({"error": "Nombre de usuario/correo o contraseña son inválidos."}), 401
+        return jsonify({"error": "Nombre de usuario/correo o contraseña no son correctos."}), 401
 
 #solicitar el restablecimiento de contraseña
 @auth_bp.route('/forgot_password', methods=['POST'])
