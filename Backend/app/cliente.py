@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request,redirect
 from app.connection import get_db_connection
 from app.decorators import token_required, cliente_required
 import os
+import bcrypt
 from werkzeug.utils import secure_filename
 from app.cargaBuket import uploadFileBucket ,download_file_from_s3
 from datetime import datetime
@@ -29,7 +30,7 @@ def cliente_route(current_user):
             carpetas = cursor.fetchall()
 
             cursor.execute('''
-                SELECT id_archivo, nombre_archivo, id_carpeta, tamano_mb
+                SELECT id_archivo, nombre_archivo, id_carpeta, tamano_mb, url_archivo
                 FROM Archivos
                 WHERE id_usuario_propietario = ? AND en_papelera = 0
             ''', (current_user['id_usuario'],))
@@ -51,10 +52,9 @@ def cliente_route(current_user):
                 espacio_total = 0
                 espacio_usado = 0
                 espacio_libre = 0
-
             return jsonify({
                 'carpetas': [{'id_carpeta': c[0], 'nombre': c[1], 'padre': c[2]} for c in carpetas],
-                'archivos': [{'id_archivo': a[0], 'nombre': a[1], 'carpeta': a[2], 'tamano_mb': a[3]} for a in archivos],
+                'archivos': [{'id_archivo': a[0], 'nombre': a[1], 'tipo': a[1].split('.')[1], 'carpeta_id': a[2], 'tamaño': a[3], 'url':a[4]} for a in archivos],
                 'espacio_total': espacio_total,
                 'espacio_usado': espacio_usado,
                 'espacio_libre': espacio_libre
@@ -320,7 +320,7 @@ def eliminar_archivo(current_user, id_archivo):
 def modificar_archivo(current_user, id_archivo):
     datos = request.json
     nuevo_nombre = datos.get('nombre_archivo')
-    
+    print(nuevo_nombre)
     if not nuevo_nombre:
         return jsonify({'error': 'El nuevo nombre del archivo es requerido.'}), 400
 
@@ -335,7 +335,6 @@ def modificar_archivo(current_user, id_archivo):
     ''', (id_archivo, current_user['id_usuario']))
     
     archivo = cursor.fetchone()
-    
     if archivo is None:
         return jsonify({'error': 'Archivo no encontrado.'}), 404
 
@@ -416,6 +415,64 @@ def vaciar_papelera(current_user):
     conn.commit()
     return jsonify({'message': 'Papelera vaciada correctamente.'}), 200
 
+# ver papelera
+
+@cliente_bp.route('/papelera', methods=['GET'])
+@token_required
+@cliente_required
+def obtener_archivos_y_carpetas_papelera(current_user):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Obtener los archivos en la papelera del usuario
+    cursor.execute('''
+        SELECT id_archivo, nombre_archivo, tamano_mb, url_archivo, id_carpeta
+        FROM Archivos
+        WHERE id_usuario_propietario = ? AND en_papelera = 1
+    ''', (current_user['id_usuario'],))
+
+    archivos = cursor.fetchall()
+
+    # Obtener las carpetas en la papelera del usuario
+    cursor.execute('''
+        SELECT id_carpeta, nombre_carpeta, id_carpeta_padre
+        FROM Carpetas
+        WHERE id_usuario_propietario = ? AND en_papelera = 1
+    ''', (current_user['id_usuario'],))
+
+    carpetas = cursor.fetchall()
+
+    # Preparar la lista de archivos
+    lista_archivos = []
+    print(archivos)
+    for archivo in archivos:
+        lista_archivos.append({
+            'id_archivo': archivo.id_archivo,
+            'nombre': archivo.nombre_archivo,
+            'tipo': archivo.nombre_archivo.split('.')[1],
+            'carpeta_id':archivo.id_carpeta,
+            'tamaño': archivo.tamano_mb,
+            'url': archivo.url_archivo
+        })
+
+    # Preparar la lista de carpetas
+    lista_carpetas = []
+    for carpeta in carpetas:
+        lista_carpetas.append({
+            'id_carpeta': carpeta.id_carpeta,
+            'nombre': carpeta.nombre_carpeta,
+            'padre': carpeta.id_carpeta_padre
+        })
+
+    # Si no hay ni archivos ni carpetas en la papelera
+    if not archivos and not carpetas:
+        return jsonify({'message': 'No hay archivos ni carpetas en la papelera.'}), 200
+
+    # Devolver los archivos y carpetas en formato JSON
+    return jsonify({
+        'archivos_en_papelera': lista_archivos,
+        'carpetas_en_papelera': lista_carpetas
+    }), 200
 
 
 # modificar datos del usuario
@@ -435,7 +492,6 @@ def modificar_perfil(current_user):
     nacionalidad = datos.get('nacionalidad')
     pais_residencia = datos.get('pais_residencia')
     contrasena = datos.get('contrasena')
-
     conn = None
     cursor = None
 
@@ -459,7 +515,8 @@ def modificar_perfil(current_user):
         if pais_residencia:
             cursor.execute('''UPDATE Usuarios SET pais_residencia = ? WHERE id_usuario = ?''', (pais_residencia, current_user['id_usuario']))
         if contrasena:
-            cursor.execute('''UPDATE Usuarios SET contrasena = ? WHERE id_usuario = ?''', (contrasena, current_user['id_usuario']))
+            contrasena = bcrypt.hashpw(contrasena.encode('utf-8'), bcrypt.gensalt())
+            cursor.execute('''UPDATE Usuarios SET contrasena = ? WHERE id_usuario = ?''', (contrasena.decode('utf-8'), current_user['id_usuario']))
 
         conn.commit()
 
@@ -484,22 +541,22 @@ def solicitar_espacio(current_user):
     datos = request.json
     tipo_solicitud = datos.get('tipo_solicitud')  # 'expandir' o 'reducir'
     cantidad = datos.get('cantidad')
-
+    print(datos)
     if tipo_solicitud not in ['expandir', 'reducir']:
         return jsonify({'error': 'Tipo de solicitud inválido.'}), 400
-
+    
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Insertar la solicitud en la base de datos
-    cursor.execute('''
-        INSERT INTO SolicitudesEspacio (id_usuario, tipo_solicitud, cantidad)
-        VALUES (?, ?, ?)
-    ''', (current_user['id_usuario'], tipo_solicitud, cantidad))
+    # Insertar la solicitud en la base de datos con estado 0 (pendiente)
+    cursor.execute('''  
+        INSERT INTO SolicitudesEspacio (id_usuario, tipo_solicitud, cantidad, estado)
+        VALUES (?, ?, ?, ?)
+    ''', (current_user['id_usuario'], tipo_solicitud, cantidad, 0))
+
     conn.commit()
 
     return jsonify({'message': 'Solicitud de espacio realizada correctamente.'}), 201
-
 #fase2
 
 @cliente_bp.route('/archivos/<int:id_archivo>/previsualizar', methods=['GET'])

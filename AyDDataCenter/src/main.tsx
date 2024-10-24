@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client'
 //local imports
 import App from './App.tsx'
 import './index.css'
-import ErrorBoundary from './components/common/ErrorBoundary.tsx'
+import ErrorBoundary from './components/shared/ErrorBoundary.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

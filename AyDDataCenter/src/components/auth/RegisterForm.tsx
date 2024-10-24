@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { registerUser } from '../../services/authService'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import useAppContext from '../../hooks/useAppContext'
 
 const RegisterForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -16,27 +17,35 @@ const RegisterForm: React.FC = () => {
   })
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const { addNotification } = useAppContext()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      setFormData({
-        ...formData,
-        [e.target.name]: e.target.value,
-      })
-    }
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     try {
       await registerUser(formData)
-      alert('Usuario registrado correctamente. Por favor, revisa tu correo para confirmar la cuenta.')
+      addNotification({
+        type: 'success',
+        message: 'Usuario registrado correctamente. Por favor, revisa tu correo para confirmar la cuenta.',
+      })
       navigate('/login')
     } catch (err: unknown) {
+      let errorMessage = 'Error al registrar usuario.'
       if (err instanceof Error) {
-        setError(err.message || 'Error al registrar usuario.')
-      } else {
-        setError('Error al registrar usuario.')
+        errorMessage = err.message || errorMessage
       }
+      setError(errorMessage)
+      addNotification({
+        type: 'error',
+        message: errorMessage,
+      })
     }
   }
 
@@ -172,7 +181,17 @@ const RegisterForm: React.FC = () => {
       >
         Registrarse
       </button>
+      <div className="text-center mt-4">
+      ¿Ya tienes una cuenta? {''} 
+      <Link
+        to="/login"
+        className="text-green-600 hover:underline"
+      >
+        Inicia sesión aquí.
+      </Link>
+      </div>
     </form>
+    
   )
 }
 
