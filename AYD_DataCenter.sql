@@ -132,13 +132,13 @@ CREATE TABLE Backups_Cifrados (
     id_backup INT PRIMARY KEY IDENTITY(1,1),
     id_usuario INT NOT NULL,
     id_archivo INT NOT NULL,
-    id_carpeta INT NULL,
     nombre_backup NVARCHAR(255) NOT NULL,
     fecha_creacion DATETIME DEFAULT GETDATE(),
     ruta_backup NVARCHAR(255) NOT NULL,
+    clave_cifrado NVARCHAR(255) NOT NULL,  -- Nueva columna para almacenar la clave de cifrado
+    tamanio_backup INT NOT NULL,            -- Nueva columna para el tamaño del backup
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario),
-    FOREIGN KEY (id_archivo) REFERENCES Archivos(id_archivo),
-    FOREIGN KEY (id_carpeta) REFERENCES Carpetas(id_carpeta)
+    FOREIGN KEY (id_archivo) REFERENCES Archivos(id_archivo)
 );
 
 

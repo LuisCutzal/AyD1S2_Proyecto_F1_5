@@ -2,7 +2,7 @@ from botocore.exceptions import NoCredentialsError, ClientError
 from dotenv import load_dotenv
 import os
 import boto3
-
+from io import BytesIO
 
 load_dotenv()
 
@@ -21,10 +21,7 @@ def uploadFileBucket(file, s3fileName):
         )
 
         s3.upload_fileobj(file,AWS_BUCKET_NAME,s3fileName)
-        url = s3.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': AWS_BUCKET_NAME, 'Key': s3fileName}
-        )
+        url = f"https://{AWS_BUCKET_NAME}.s3.amazonaws.com/{s3fileName}"
         return url
     
     except NoCredentialsError as e:
@@ -36,3 +33,27 @@ def uploadFileBucket(file, s3fileName):
         
     except Exception as e:
         print(e)
+
+
+
+def download_file_from_s3(s3file_name):
+    try:
+        file_obj = BytesIO()
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name = AWS_REGION_NAME
+        )
+        s3.download_fileobj(AWS_BUCKET_NAME, s3file_name, file_obj)
+        file_obj.seek(0)  # Volver al inicio del objeto BytesIO
+        return file_obj
+    except NoCredentialsError:
+        print("Error: No se encontraron las credenciales de AWS.")
+        raise
+    except ClientError as e:
+        print(f"Error al descargar el archivo: {e.response['Error']['Message']}")
+        raise
+    except Exception as e:
+        print(f"Error inesperado: {str(e)}")
+        raise

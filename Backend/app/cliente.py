@@ -1,12 +1,15 @@
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request,redirect
 from app.connection import get_db_connection
 from app.decorators import token_required, cliente_required
 import os
 import bcrypt
 from werkzeug.utils import secure_filename
-from app.cargaBuket import uploadFileBucket
+from app.cargaBuket import uploadFileBucket ,download_file_from_s3
 from datetime import datetime
-
+from cryptography.fernet import Fernet
+from flask import jsonify, request
+from io import BytesIO
+from werkzeug.exceptions import BadRequest
 cliente_bp = Blueprint('cliente', __name__)
 
 @cliente_bp.route('/dashboard', methods=['GET'])  
@@ -554,3 +557,346 @@ def solicitar_espacio(current_user):
     conn.commit()
 
     return jsonify({'message': 'Solicitud de espacio realizada correctamente.'}), 201
+#fase2
+
+@cliente_bp.route('/archivos/<int:id_archivo>/previsualizar', methods=['GET'])
+@token_required
+@cliente_required
+def previsualizar_archivo(current_user, id_archivo):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT url_archivo
+            FROM Archivos
+            WHERE id_archivo = ? AND id_usuario_propietario = ?
+        ''', (id_archivo, current_user['id_usuario']))
+        
+        archivo = cursor.fetchone()
+        
+        if archivo:
+            url_archivo = archivo[0]
+            return jsonify({'url_archivo': url_archivo}), 200  # Enviar URL al front-end
+        else:
+            return jsonify({'error': 'Archivo no encontrado'}), 404
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@cliente_bp.route('/favoritos', methods=['GET'])
+@token_required
+@cliente_required
+def obtener_favoritos(current_user):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Obtener las carpetas favoritas del usuario
+        cursor.execute('''
+            SELECT f.id_favorito, c.id_carpeta, c.nombre_carpeta, c.id_carpeta_padre
+            FROM Favoritos f
+            JOIN Carpetas c ON f.id_carpeta = c.id_carpeta
+            WHERE f.id_usuario = ? AND f.id_carpeta IS NOT NULL
+        ''', (current_user['id_usuario'],))
+        carpetas_favoritas = cursor.fetchall()
+
+        # Obtener los archivos favoritos del usuario
+        cursor.execute('''
+            SELECT f.id_favorito, a.id_archivo, a.nombre_archivo, a.tamano_mb, a.id_carpeta
+            FROM Favoritos f
+            JOIN Archivos a ON f.id_archivo = a.id_archivo
+            WHERE f.id_usuario = ? AND f.id_archivo IS NOT NULL
+        ''', (current_user['id_usuario'],))
+        archivos_favoritos = cursor.fetchall()
+
+        return jsonify({
+            'carpetas_favoritas': [{'id_favorito': c[0], 'id_carpeta': c[1], 'nombre_carpeta': c[2], 'id_carpeta_padre': c[3]} for c in carpetas_favoritas],
+            'archivos_favoritos': [{'id_favorito': a[0], 'id_archivo': a[1], 'nombre_archivo': a[2], 'tamano_mb': a[3], 'id_carpeta': a[4]} for a in archivos_favoritos]
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@cliente_bp.route('/favoritos/agregar', methods=['POST'])
+@token_required
+@cliente_required
+def agregar_favorito(current_user):
+    try:
+        data = request.json  # Obtener los datos del cuerpo de la petición
+        id_archivo = data.get('id_archivo')
+        id_carpeta = data.get('id_carpeta')
+
+        # Validar que uno de los dos esté presente y que no se envíen ambos
+        if not id_archivo and not id_carpeta:
+            return jsonify({'error': 'Debe proporcionar un id de archivo o carpeta para agregar a favoritos'}), 400
+
+        if id_archivo and id_carpeta:
+            return jsonify({'error': 'Solo puede agregar un archivo o una carpeta a la vez, no ambos'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Verificar que el archivo o carpeta pertenezca al usuario
+        if id_archivo:
+            cursor.execute('''
+                SELECT id_archivo
+                FROM Archivos
+                WHERE id_archivo = ? AND id_usuario_propietario = ?
+            ''', (id_archivo, current_user['id_usuario']))
+            archivo = cursor.fetchone()
+
+            if not archivo:
+                return jsonify({'error': 'Archivo no encontrado'}), 404
+
+            # Verificar si el archivo ya está en favoritos
+            cursor.execute('''
+                SELECT id_favorito
+                FROM Favoritos
+                WHERE id_usuario = ? AND id_archivo = ?
+            ''', (current_user['id_usuario'], id_archivo))
+            favorito_existente = cursor.fetchone()
+
+            if favorito_existente:
+                return jsonify({'error': 'El archivo ya está en favoritos'}), 400
+
+        if id_carpeta:
+            cursor.execute('''
+                SELECT id_carpeta
+                FROM Carpetas
+                WHERE id_carpeta = ? AND id_usuario_propietario = ?
+            ''', (id_carpeta, current_user['id_usuario']))
+            carpeta = cursor.fetchone()
+
+            if not carpeta:
+                return jsonify({'error': 'Carpeta no encontrada'}), 404
+
+            # Verificar si la carpeta ya está en favoritos
+            cursor.execute('''
+                SELECT id_favorito
+                FROM Favoritos
+                WHERE id_usuario = ? AND id_carpeta = ?
+            ''', (current_user['id_usuario'], id_carpeta))
+            favorito_existente = cursor.fetchone()
+
+            if favorito_existente:
+                return jsonify({'error': 'La carpeta ya está en favoritos'}), 400
+
+        # Agregar a favoritos
+        cursor.execute('''
+            INSERT INTO Favoritos (id_usuario, id_archivo, id_carpeta)
+            VALUES (?, ?, ?)
+        ''', (current_user['id_usuario'], id_archivo, id_carpeta))
+        conn.commit()
+
+        return jsonify({'message': 'Favorito agregado exitosamente'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
+
+# Generar una clave de cifrado
+def generar_clave():
+    return Fernet.generate_key()
+
+# Función para cifrar datos en memoria
+def cifrar_datos(datos, clave):
+    fernet = Fernet(clave)
+    return fernet.encrypt(datos)
+
+# Endpoint para crear un backup cifrado
+@cliente_bp.route('/backups/cifrar', methods=['POST'])
+@token_required
+@cliente_required
+def crear_backup_cifrado(current_user):
+    try:
+        data = request.json
+        id_archivo = data.get('id_archivo')
+        nombre_backup = data.get('nombre_backup')
+
+        if not id_archivo or not nombre_backup:
+            return jsonify({'error': 'Debe proporcionar id_archivo y nombre_backup'}), 400
+
+        # Verificar que el archivo pertenezca al usuario
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Obtener la URL del archivo desde la base de datos
+        cursor.execute('''SELECT id_archivo, url_archivo, tamano_mb 
+                        FROM Archivos 
+                        WHERE id_archivo = ? AND id_usuario_propietario = ?''',
+                    (id_archivo, current_user['id_usuario']))
+        archivo = cursor.fetchone()
+
+        if not archivo:
+            return jsonify({'error': 'Archivo no encontrado o no pertenece al usuario'}), 404
+
+        # Extraer el nombre del archivo de la URL
+        nombre_archivo = archivo[1].split('/')[-1]  # Obtener solo el nombre del archivo
+        # Descargar el archivo desde S3 usando el nombre extraído
+        archivo_obj = download_file_from_s3(nombre_archivo)  # Pasa solo el nombre del archivo
+        
+        # Generar una nueva clave de cifrado
+        clave_cifrado = generar_clave()
+        
+        # Cifrar los datos del archivo
+        archivo_cifrado = cifrar_datos(archivo_obj.read(), clave_cifrado)
+
+        # Generar un timestamp para el nombre del archivo
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')  # Formato: YYYYMMDD_HHMMSS_mili
+        s3fileName = f"{nombre_backup}_{timestamp}.enc"  # Modificar el nombre del archivo
+
+        # Subir el archivo cifrado a S3
+        archivo_cifrado_obj = BytesIO(archivo_cifrado)
+        archivo_cifrado_obj.seek(0)  # Asegurarse de estar al principio del archivo
+        url_backup = uploadFileBucket(archivo_cifrado_obj, s3fileName)
+
+        # Guardar información del backup en la base de datos
+        tamanio_backup = len(archivo_cifrado)  # Obtener el tamaño del backup
+        cursor.execute('''INSERT INTO Backups_Cifrados 
+                          (id_usuario, id_archivo, nombre_backup, ruta_backup, clave_cifrado, tamanio_backup) 
+                          VALUES (?, ?, ?, ?, ?, ?)''',
+                       (current_user['id_usuario'], archivo[0], nombre_backup, url_backup, clave_cifrado.decode(), tamanio_backup))
+        conn.commit()
+
+        return jsonify({
+            'message': 'Backup cifrado creado exitosamente',
+            'url': url_backup,
+            'claveDescifrado': clave_cifrado.decode()  # Incluir la clave de cifrado en la respuesta
+        }), 201
+
+    except BadRequest as e:
+        return jsonify({'error': str(e)}), 400
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# Función para descifrar datos
+def descifrar_datos(datos_cifrados, clave):
+    fernet = Fernet(clave.encode()) if isinstance(clave, str) else Fernet(clave)
+    return fernet.decrypt(datos_cifrados)
+
+# Endpoint para descifrar un backup
+
+@cliente_bp.route('/backups/descifrar/<int:id_backup>', methods=['POST'])
+@token_required
+@cliente_required
+def descifrar_backup(current_user, id_backup):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Obtener la URL, clave de descifrado y id_archivo
+        cursor.execute('''SELECT ruta_backup, clave_cifrado, id_archivo 
+                          FROM Backups_Cifrados 
+                          WHERE id_backup = ? AND id_usuario = ?''',
+                       (id_backup, current_user['id_usuario']))
+        resultado = cursor.fetchone()
+
+        if resultado is None:
+            print(f"No se encontró backup para id_backup: {id_backup} y id_usuario: {current_user['id_usuario']}")
+            return jsonify({'error': 'Backup no encontrado o no pertenece al usuario'}), 404
+
+        url_backup, clave_descifrado, id_archivo = resultado  # Asignar la URL, clave y id_archivo
+
+        # Obtener el nombre del archivo desde la tabla Archivos usando id_archivo
+        cursor.execute('''SELECT nombre_archivo 
+                          FROM Archivos 
+                          WHERE id_archivo = ?''', (id_archivo,))
+        archivo_resultado = cursor.fetchone()
+
+        if archivo_resultado is None:
+            print(f"No se encontró archivo con id_archivo: {id_archivo}")
+            return jsonify({'error': 'Archivo no encontrado'}), 404
+
+        nombre_archivo = archivo_resultado[0]  # Obtener el nombre del archivo
+
+        # Extraer la extensión del archivo usando split
+        nombre_dividido = nombre_archivo.rsplit('.', 1)  # Divide por el último punto
+        if len(nombre_dividido) == 2:
+            extension_archivo = nombre_dividido[1]  # Obtén la extensión (la parte después del punto)
+        else:
+            extension_archivo = 'desconocido'  # Si no hay extensión, usa un valor predeterminado
+
+        # Descargar el archivo cifrado desde S3
+        archivo_cifrado_obj = download_file_from_s3(url_backup.split('/')[-1])  # Obtiene solo el nombre del archivo
+        
+        archivo_cifrado = archivo_cifrado_obj.read()  # Lee el contenido del archivo
+
+        # Desencriptar el archivo
+        fernet = Fernet(clave_descifrado.encode())
+        contenido_descifrado = fernet.decrypt(archivo_cifrado)  # Desencripta el archivo
+
+        # Guardar el archivo descifrado en el sistema de archivos con la extensión extraída
+        nombre_archivo_descifrado = f"descifrado_{id_backup}.{extension_archivo}"  # Usa la extensión correcta
+        with open(nombre_archivo_descifrado, 'wb') as f:
+            f.write(contenido_descifrado)
+
+        return jsonify({
+            'message': 'Archivo descifrado exitosamente'
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@cliente_bp.route('/backups', methods=['GET'])
+@token_required
+@cliente_required
+def obtener_backups_cifrados(current_user):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Consultar todos los backups cifrados del usuario actual
+        cursor.execute('''SELECT id_backup, ruta_backup, fecha_creacion ,nombre_backup
+                          FROM Backups_Cifrados 
+                          WHERE id_usuario = ?''', (current_user['id_usuario'],))
+        backups = cursor.fetchall()
+
+        # Si no se encontraron backups
+        if not backups:
+            return jsonify({'message': 'No se encontraron backups cifrados para este usuario'}), 404
+
+        # Crear una lista de los backups
+        lista_backups = []
+        for backup in backups:
+            id_backup, ruta_backup, fecha_creacion,nombre_backup = backup
+            lista_backups.append({
+                'id_backup': id_backup,
+                'ruta_backup': ruta_backup,
+                'fecha_creacion': fecha_creacion.strftime('%Y-%m-%d %H:%M:%S'),  # Convertir a string legible
+                'nombre_backup': nombre_backup
+            })
+
+        return jsonify({'backups': lista_backups}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
